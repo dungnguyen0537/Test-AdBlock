@@ -1,3 +1,7 @@
+/* ═══════════════════════════════════════════
+   AdBlock & DNS Filter Assessment
+   Dark Premium Theme
+   ═══════════════════════════════════════════ */
 
 :root {
     --bg-deep: #0a0e17;
@@ -701,8 +705,16 @@ body.is-modal-open {
 
 .category-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 16px;
+    align-items: start;
+}
+
+.category-column {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-width: 0;
 }
 
 .category-card {
@@ -1900,6 +1912,10 @@ body.is-modal-open {
 
     .category-grid {
         grid-template-columns: 1fr;
+    }
+
+    .category-column {
+        gap: 16px;
     }
 
     .mini-stats {
