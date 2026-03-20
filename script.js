@@ -212,6 +212,7 @@
     ];
 
     let autoDataPromise = null;
+    let summaryModalReturnFocus = null;
 
     const CATEGORY_ICONS = {
         ads: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 11 18-5v12L3 13v-2z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg>`,
@@ -825,6 +826,18 @@
         return o;
     }
 
+    function getScoreToneClass(score) {
+        if (score >= 70) return 'score-high';
+        if (score >= 40) return 'score-mid';
+        return 'score-low';
+    }
+
+    function getConfidenceScore(overview) {
+        return Math.max(10, Math.min(95, Math.round(
+            30 + (state.controlsHealthy ? 20 : -5) + overview.tested * 0.5 - overview.uncertain * 3
+        )));
+    }
+
     function classifyProfile(scores) {
         const { ads, tracking, malware, adult, spam, telemetry } = scores;
         const avg = (ads + tracking + malware + spam + (telemetry || 0)) / 5;
@@ -854,6 +867,31 @@
             return { title: 'Chưa phát hiện bộ lọc', summary: 'Hầu hết request đều đi qua. Thiết bị chưa cài bộ lọc quảng cáo hoặc DNS filter nào đáng kể.', grade: 'F' };
         }
         return { title: 'Bộ lọc yếu', summary: 'Một số domain bị chặn nhưng phần lớn vẫn đi qua. Nên cân nhắc bổ sung thêm danh sách filter.', grade: 'D' };
+    }
+
+    function buildReportSnapshot() {
+        const overview = collectOverview();
+        const overallScore = overview.tested
+            ? Math.round(((overview.blocked + overview.partial * 0.5) / overview.tested) * 100)
+            : 0;
+
+        const scores = {};
+        CATEGORY_ORDER.forEach(cat => {
+            scores[cat] = getEffectiveScore(getCategoryStats(cat));
+        });
+
+        const completedAt = Date.now();
+
+        return {
+            overview,
+            overallScore,
+            scores,
+            profile: classifyProfile(scores),
+            passedGroups: collectPassedGroups(),
+            completedAt,
+            elapsed: ((completedAt - state.startTime) / 1000).toFixed(1),
+            confidence: getConfidenceScore(overview),
+        };
     }
 
     /* ─── Animated Score Counter ─── */
@@ -916,9 +954,7 @@
             gradeEl.className = `grade-badge grade-${profile.grade.toLowerCase()}`;
         }
 
-        const confidence = Math.max(10, Math.min(95, Math.round(
-            30 + (state.controlsHealthy ? 20 : -5) + overview.tested * 0.5 - overview.uncertain * 3
-        )));
+        const confidence = getConfidenceScore(overview);
         setText('confidenceText', `Độ tin cậy ${confidence}%`);
 
         const progress = state.progress.total
@@ -1092,6 +1128,7 @@
         state.controlsHealthy = false;
         state.controlsPassed = 0;
         state.resultsReady = false;
+        closeSummaryModal({ restoreFocus: false, scrollToReport: false });
         CATEGORY_ORDER.forEach(cat => {
             getCategoryItems(cat).forEach(p => {
                 state.results[cat][p.id] = { status: 'pending', latency: 0, note: 'Chưa chạy' };
@@ -1286,26 +1323,122 @@
         }
     }
 
+    function closeSummaryModal({ restoreFocus = true, scrollToReport = false } = {}) {
+        const modal = $('summaryModal');
+        if (!modal || modal.hidden) return;
+
+        modal.hidden = true;
+        modal.setAttribute('aria-hidden', 'true');
+        document.body.classList.remove('is-modal-open');
+
+        if (scrollToReport) {
+            const report = $('reportSection');
+            if (report && report.style.display !== 'none') {
+                report.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+
+        if (restoreFocus && summaryModalReturnFocus && typeof summaryModalReturnFocus.focus === 'function') {
+            summaryModalReturnFocus.focus();
+        }
+
+        summaryModalReturnFocus = null;
+    }
+
+    function openSummaryModal(snapshot) {
+        const modal = $('summaryModal');
+        const dialog = $('summaryModalDialog');
+        const score = $('summaryModalScore');
+        const title = $('summaryModalTitle');
+        const description = $('summaryModalDescription');
+        const meta = $('summaryModalMeta');
+        const stats = $('summaryModalStats');
+        const version = $('summaryModalVersion');
+        const doneButton = $('summaryModalDone');
+
+        if (!modal || !dialog || !score || !title || !description || !meta || !stats) return;
+
+        score.textContent = `${snapshot.overallScore}%`;
+        score.className = `summary-modal-score ${getScoreToneClass(snapshot.overallScore)}`;
+        title.textContent = snapshot.profile.title;
+        description.textContent = snapshot.profile.summary;
+        meta.textContent = `Hoàn tất trong ${snapshot.elapsed}s · ${formatRunTime(snapshot.completedAt)} · ${snapshot.overview.total} probe · Độ tin cậy ${snapshot.confidence}%`;
+
+        stats.innerHTML = `
+            <div class="summary-modal-stat is-blocked">
+                <span class="summary-modal-stat-label">Đã chặn</span>
+                <strong class="summary-modal-stat-value">${snapshot.overview.blocked}</strong>
+                <span class="summary-modal-stat-note">${snapshot.overview.tested ? Math.round(snapshot.overview.blocked / snapshot.overview.tested * 100) : 0}% tổng số probe</span>
+            </div>
+            <div class="summary-modal-stat is-partial">
+                <span class="summary-modal-stat-label">Một phần</span>
+                <strong class="summary-modal-stat-value">${snapshot.overview.partial}</strong>
+                <span class="summary-modal-stat-note">${snapshot.overview.tested ? Math.round(snapshot.overview.partial / snapshot.overview.tested * 100) : 0}% tổng số probe</span>
+            </div>
+            <div class="summary-modal-stat is-passed">
+                <span class="summary-modal-stat-label">Đi qua</span>
+                <strong class="summary-modal-stat-value">${snapshot.overview.passed}</strong>
+                <span class="summary-modal-stat-note">${snapshot.overview.tested ? Math.round(snapshot.overview.passed / snapshot.overview.tested * 100) : 0}% tổng số probe</span>
+            </div>
+            <div class="summary-modal-stat is-control">
+                <span class="summary-modal-stat-label">Control OK</span>
+                <strong class="summary-modal-stat-value">${state.controlsPassed}/${DATA.controls.length}</strong>
+                <span class="summary-modal-stat-note">${state.controlsHealthy ? 'Đường mạng ổn định để kết luận' : 'Cần xem kỹ lại control probes'}</span>
+            </div>
+        `;
+
+        if (version) {
+            version.textContent = `Version update: v${APP_VERSION}`;
+        }
+
+        summaryModalReturnFocus = document.activeElement instanceof HTMLElement
+            ? document.activeElement
+            : null;
+
+        modal.hidden = false;
+        modal.setAttribute('aria-hidden', 'false');
+        document.body.classList.add('is-modal-open');
+
+        window.requestAnimationFrame(() => {
+            if (doneButton) {
+                doneButton.focus();
+                return;
+            }
+            dialog.focus();
+        });
+    }
+
+    function bindSummaryModalInteractions() {
+        const backdrop = $('summaryModalBackdrop');
+        const doneButton = $('summaryModalDone');
+        const modal = $('summaryModal');
+
+        if (backdrop) {
+            backdrop.addEventListener('click', () => {
+                closeSummaryModal({ restoreFocus: true, scrollToReport: false });
+            });
+        }
+
+        if (doneButton) {
+            doneButton.addEventListener('click', () => {
+                closeSummaryModal({ restoreFocus: true, scrollToReport: true });
+            });
+        }
+
+        document.addEventListener('keydown', event => {
+            if (event.key !== 'Escape' || !modal || modal.hidden) return;
+            closeSummaryModal({ restoreFocus: true, scrollToReport: false });
+        });
+    }
+
     /* ─── Report Generation ─── */
 
-    function generateReport() {
+    function generateReport(snapshot = buildReportSnapshot(), { scrollIntoView = true } = {}) {
         const report = $('reportSection');
         const content = $('reportContent');
-        if (!report || !content) return;
+        if (!report || !content) return snapshot;
 
-        const overview = collectOverview();
-        const overallScore = overview.tested
-            ? Math.round(((overview.blocked + overview.partial * 0.5) / overview.tested) * 100)
-            : 0;
-
-        const scores = {};
-        CATEGORY_ORDER.forEach(cat => {
-            scores[cat] = getEffectiveScore(getCategoryStats(cat));
-        });
-        const profile = classifyProfile(scores);
-        const passedGroups = collectPassedGroups();
-
-        const elapsed = ((Date.now() - state.startTime) / 1000).toFixed(1);
+        const { overview, overallScore, scores, profile, passedGroups, elapsed, completedAt } = snapshot;
 
         // Recommendations
         let recommendations = '';
@@ -1357,13 +1490,13 @@
         `;
 
         content.innerHTML = `
-            <div class="report-header">
+                <div class="report-header">
                 <div class="report-title-area">
                     <h3>📊 Báo cáo đánh giá bộ lọc</h3>
-                    <span class="report-time">Hoàn tất trong ${elapsed}s · ${formatRunTime(Date.now())} · ${overview.total} domain đã kiểm tra</span>
+                    <span class="report-time">Hoàn tất trong ${elapsed}s · ${formatRunTime(completedAt)} · ${overview.total} domain đã kiểm tra</span>
                 </div>
                 <div class="report-overall">
-                    <div class="report-overall-score ${overallScore >= 70 ? 'score-high' : overallScore >= 40 ? 'score-mid' : 'score-low'}">
+                    <div class="report-overall-score ${getScoreToneClass(overallScore)}">
                         ${overallScore}%
                     </div>
                     <div class="report-overall-info">
@@ -1406,7 +1539,10 @@
 
         bindPassedDomainInteractions(passedGroups);
         report.style.display = 'block';
-        report.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        if (scrollIntoView) {
+            report.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+        return snapshot;
     }
 
     /* ─── Main Run ─── */
@@ -1458,7 +1594,8 @@
         closeAllCategoryAccordions();
 
         // Generate report
-        generateReport();
+        const snapshot = generateReport(undefined, { scrollIntoView: false });
+        openSummaryModal(snapshot);
     };
 
     /* ─── Init ─── */
@@ -1476,10 +1613,12 @@
         setText('datasetVersion', getDatasetLabel());
         setText('lastRunAt', '-');
         setText('controlStatus', '-');
-        setText('footerVersion', `Version Update: v${APP_VERSION}`);
+        setText('footerVersion', `Version update: v${APP_VERSION}`);
+        setText('summaryModalVersion', `Version update: v${APP_VERSION}`);
         setText('requestMode', 'Request thật qua DNS / filter');
         setRunStatus('Sẵn sàng', 'is-idle');
         updateDashboard();
+        bindSummaryModalInteractions();
 
         const circle = $('scoreRingCircle');
         if (circle) {
