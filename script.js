@@ -654,58 +654,76 @@
         `).join('');
     }
 
+    function buildCategoryCardMarkup(cat, catIdx) {
+        const meta = DATA.categories[cat];
+        const items = getCategoryItems(cat);
+        const icon = CATEGORY_ICONS[cat] || '';
+
+        return `
+            <article class="category-card tone-${meta.tone}" id="card-${cat}" style="animation-delay:${catIdx * 0.08}s">
+                <div class="category-card-head category-toggle ${state.resultsReady ? '' : 'is-disabled'}" id="toggle-${cat}" role="button" tabindex="${state.resultsReady ? '0' : '-1'}" aria-expanded="false" aria-controls="body-${cat}" aria-disabled="${state.resultsReady ? 'false' : 'true'}">
+                    <div class="category-head-left">
+                        <div class="category-icon-wrap tone-${meta.tone}">${icon}</div>
+                        <div>
+                            <span class="category-kicker">${escapeHtml(meta.label)}</span>
+                            <h3>${escapeHtml(meta.summary)}</h3>
+                        </div>
+                    </div>
+                    <div class="category-head-right">
+                        <div class="category-score-wrap">
+                            <div class="category-score" id="score-${cat}">0<small>%</small></div>
+                            <div class="category-count" id="count-${cat}">0/${items.length}</div>
+                        </div>
+                        <div class="category-toggle-icon" aria-hidden="true">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                        </div>
+                    </div>
+                </div>
+                <div class="category-body" id="body-${cat}" hidden>
+                    <div class="category-progress-shell">
+                        <div class="category-progress-fill tone-${meta.tone}" id="catprog-${cat}"></div>
+                    </div>
+                    <div class="category-stats" id="stats-${cat}">0 bị chặn • 0 một phần • 0 đi qua</div>
+                    <div class="probe-list">
+                        ${items.map((probe, idx) => `
+                            <div class="probe-item" id="probe-${probe.id}" style="animation-delay:${(catIdx * items.length + idx) * 0.015}s">
+                                <div class="probe-copy">
+                                    <strong>${escapeHtml(probe.name)}</strong>
+                                    <span>${escapeHtml(probe.kind === 'hostname' ? probe.target : probe.desc)}</span>
+                                </div>
+                                <div class="probe-meta">
+                                    <span class="status-pill status-pending" id="pill-${probe.id}">${TEXT.pending}</span>
+                                    <span class="latency-pill" id="latency-${probe.id}">-</span>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            </article>
+        `;
+    }
+
     function renderCategories() {
         const grid = $('categoryGrid');
         if (!grid) return;
 
-        grid.innerHTML = CATEGORY_ORDER.map((cat, catIdx) => {
-            const meta = DATA.categories[cat];
-            const items = getCategoryItems(cat);
-            const icon = CATEGORY_ICONS[cat] || '';
+        const useSplitColumns = window.matchMedia('(min-width: 1025px)').matches;
 
-            return `
-                <article class="category-card tone-${meta.tone}" id="card-${cat}" style="animation-delay:${catIdx * 0.08}s">
-                    <div class="category-card-head category-toggle ${state.resultsReady ? '' : 'is-disabled'}" id="toggle-${cat}" role="button" tabindex="${state.resultsReady ? '0' : '-1'}" aria-expanded="false" aria-controls="body-${cat}" aria-disabled="${state.resultsReady ? 'false' : 'true'}">
-                        <div class="category-head-left">
-                            <div class="category-icon-wrap tone-${meta.tone}">${icon}</div>
-                            <div>
-                                <span class="category-kicker">${escapeHtml(meta.label)}</span>
-                                <h3>${escapeHtml(meta.summary)}</h3>
-                            </div>
-                        </div>
-                        <div class="category-head-right">
-                            <div class="category-score-wrap">
-                                <div class="category-score" id="score-${cat}">0<small>%</small></div>
-                                <div class="category-count" id="count-${cat}">0/${items.length}</div>
-                            </div>
-                            <div class="category-toggle-icon" aria-hidden="true">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="category-body" id="body-${cat}" hidden>
-                        <div class="category-progress-shell">
-                            <div class="category-progress-fill tone-${meta.tone}" id="catprog-${cat}"></div>
-                        </div>
-                        <div class="category-stats" id="stats-${cat}">0 bị chặn • 0 một phần • 0 đi qua</div>
-                        <div class="probe-list">
-                            ${items.map((probe, idx) => `
-                                <div class="probe-item" id="probe-${probe.id}" style="animation-delay:${(catIdx * items.length + idx) * 0.015}s">
-                                    <div class="probe-copy">
-                                        <strong>${escapeHtml(probe.name)}</strong>
-                                        <span>${escapeHtml(probe.kind === 'hostname' ? probe.target : probe.desc)}</span>
-                                    </div>
-                                    <div class="probe-meta">
-                                        <span class="status-pill status-pending" id="pill-${probe.id}">${TEXT.pending}</span>
-                                        <span class="latency-pill" id="latency-${probe.id}">-</span>
-                                    </div>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-                </article>
-            `;
-        }).join('');
+        if (useSplitColumns) {
+            const columns = [[], []];
+
+            CATEGORY_ORDER.forEach((cat, catIdx) => {
+                columns[catIdx % 2].push(buildCategoryCardMarkup(cat, catIdx));
+            });
+
+            grid.innerHTML = columns.map((cards, idx) => `
+                <div class="category-column" data-column="${idx}">
+                    ${cards.join('')}
+                </div>
+            `).join('');
+        } else {
+            grid.innerHTML = CATEGORY_ORDER.map((cat, catIdx) => buildCategoryCardMarkup(cat, catIdx)).join('');
+        }
 
         bindCategoryAccordionInteractions();
     }
