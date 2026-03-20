@@ -11,6 +11,7 @@
     const AUTO_DATA_CACHE_VERSION = 2;
     const AUTO_DATA_TIMEOUT = 12000;
     const APP_VERSION = '1.0.1';
+    const CATEGORY_SPLIT_BREAKPOINT = '(min-width: 1025px)';
 
     const AUTO_FEEDS = [
         {
@@ -231,6 +232,7 @@
         progress: { total: 0, done: 0 },
         startTime: 0,
         resultsReady: false,
+        categoryLayoutMode: '',
         autoDataMeta: {
             mode: 'static',
             totalAuto: 0,
@@ -269,6 +271,14 @@
     function $(id) { return document.getElementById(id); }
 
     function setText(id, v) { const el = $(id); if (el) el.textContent = v; }
+
+    function getCategoryLayoutMode() {
+        return window.matchMedia(CATEGORY_SPLIT_BREAKPOINT).matches ? 'split' : 'stack';
+    }
+
+    function getExpandedCategoryId() {
+        return CATEGORY_ORDER.find(cat => $(`card-${cat}`)?.classList.contains('is-open')) || null;
+    }
 
     function isAutoProbe(probe) {
         return typeof probe?.id === 'string' && probe.id.startsWith(`${AUTO_PROBE_PREFIX}-`);
@@ -703,11 +713,25 @@
         `;
     }
 
-    function renderCategories() {
+    function syncCategoryCardsFromState() {
+        CATEGORY_ORDER.forEach(cat => {
+            getCategoryItems(cat).forEach(probe => {
+                const result = state.results[cat]?.[probe.id];
+                if (!result) return;
+                updateProbeItem(probe.id, result.status, result.latency, result.note);
+            });
+        });
+
+        updateDashboard();
+    }
+
+    function renderCategories(expandedCat = null) {
         const grid = $('categoryGrid');
         if (!grid) return;
 
-        const useSplitColumns = window.matchMedia('(min-width: 1025px)').matches;
+        const layoutMode = getCategoryLayoutMode();
+        const useSplitColumns = layoutMode === 'split';
+        state.categoryLayoutMode = layoutMode;
 
         if (useSplitColumns) {
             const columns = [[], []];
@@ -726,6 +750,19 @@
         }
 
         bindCategoryAccordionInteractions();
+        syncCategoryCardsFromState();
+
+        if (state.resultsReady && expandedCat && CATEGORY_ORDER.includes(expandedCat)) {
+            setCategoryExpanded(expandedCat, true);
+        }
+    }
+
+    function syncCategoryLayout(force = false) {
+        const nextMode = getCategoryLayoutMode();
+        if (!force && nextMode === state.categoryLayoutMode) return;
+
+        const expandedCat = getExpandedCategoryId();
+        renderCategories(expandedCat);
     }
 
     function setCategoryExpanded(cat, expanded) {
@@ -1505,6 +1542,15 @@
             circle.style.strokeDasharray = circumference;
             circle.style.strokeDashoffset = circumference;
         }
+
+        let resizeFrame = 0;
+        window.addEventListener('resize', () => {
+            if (resizeFrame) window.cancelAnimationFrame(resizeFrame);
+            resizeFrame = window.requestAnimationFrame(() => {
+                resizeFrame = 0;
+                syncCategoryLayout();
+            });
+        });
 
         void ensureAutoDataLoaded();
     }
