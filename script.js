@@ -229,6 +229,7 @@
         abortControllers: [],
         progress: { total: 0, done: 0 },
         startTime: 0,
+        resultsReady: false,
         autoDataMeta: {
             mode: 'static',
             totalAuto: 0,
@@ -663,7 +664,7 @@
 
             return `
                 <article class="category-card tone-${meta.tone}" id="card-${cat}" style="animation-delay:${catIdx * 0.08}s">
-                    <div class="category-card-head">
+                    <div class="category-card-head category-toggle ${state.resultsReady ? '' : 'is-disabled'}" id="toggle-${cat}" role="button" tabindex="${state.resultsReady ? '0' : '-1'}" aria-expanded="false" aria-controls="body-${cat}" aria-disabled="${state.resultsReady ? 'false' : 'true'}">
                         <div class="category-head-left">
                             <div class="category-icon-wrap tone-${meta.tone}">${icon}</div>
                             <div>
@@ -671,32 +672,95 @@
                                 <h3>${escapeHtml(meta.summary)}</h3>
                             </div>
                         </div>
-                        <div class="category-score-wrap">
-                            <div class="category-score" id="score-${cat}">0<small>%</small></div>
-                            <div class="category-count" id="count-${cat}">0/${items.length}</div>
+                        <div class="category-head-right">
+                            <div class="category-score-wrap">
+                                <div class="category-score" id="score-${cat}">0<small>%</small></div>
+                                <div class="category-count" id="count-${cat}">0/${items.length}</div>
+                            </div>
+                            <div class="category-toggle-icon" aria-hidden="true">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                            </div>
                         </div>
                     </div>
-                    <div class="category-progress-shell">
-                        <div class="category-progress-fill tone-${meta.tone}" id="catprog-${cat}"></div>
-                    </div>
-                    <div class="category-stats" id="stats-${cat}">0 bị chặn • 0 một phần • 0 đi qua</div>
-                    <div class="probe-list">
-                        ${items.map((probe, idx) => `
-                            <div class="probe-item" id="probe-${probe.id}" style="animation-delay:${(catIdx * items.length + idx) * 0.015}s">
-                                <div class="probe-copy">
-                                    <strong>${escapeHtml(probe.name)}</strong>
-                                    <span>${escapeHtml(probe.kind === 'hostname' ? probe.target : probe.desc)}</span>
+                    <div class="category-body" id="body-${cat}" hidden>
+                        <div class="category-progress-shell">
+                            <div class="category-progress-fill tone-${meta.tone}" id="catprog-${cat}"></div>
+                        </div>
+                        <div class="category-stats" id="stats-${cat}">0 bị chặn • 0 một phần • 0 đi qua</div>
+                        <div class="probe-list">
+                            ${items.map((probe, idx) => `
+                                <div class="probe-item" id="probe-${probe.id}" style="animation-delay:${(catIdx * items.length + idx) * 0.015}s">
+                                    <div class="probe-copy">
+                                        <strong>${escapeHtml(probe.name)}</strong>
+                                        <span>${escapeHtml(probe.kind === 'hostname' ? probe.target : probe.desc)}</span>
+                                    </div>
+                                    <div class="probe-meta">
+                                        <span class="status-pill status-pending" id="pill-${probe.id}">${TEXT.pending}</span>
+                                        <span class="latency-pill" id="latency-${probe.id}">-</span>
+                                    </div>
                                 </div>
-                                <div class="probe-meta">
-                                    <span class="status-pill status-pending" id="pill-${probe.id}">${TEXT.pending}</span>
-                                    <span class="latency-pill" id="latency-${probe.id}">-</span>
-                                </div>
-                            </div>
-                        `).join('')}
+                            `).join('')}
+                        </div>
                     </div>
                 </article>
             `;
         }).join('');
+
+        bindCategoryAccordionInteractions();
+    }
+
+    function setCategoryExpanded(cat, expanded) {
+        const card = $(`card-${cat}`);
+        const toggle = $(`toggle-${cat}`);
+        const body = $(`body-${cat}`);
+        if (!card || !toggle || !body) return;
+
+        body.hidden = !expanded;
+        card.classList.toggle('is-open', expanded);
+        toggle.setAttribute('aria-expanded', String(expanded));
+    }
+
+    function closeAllCategoryAccordions() {
+        CATEGORY_ORDER.forEach(cat => setCategoryExpanded(cat, false));
+    }
+
+    function updateCategoryAccordionAvailability() {
+        CATEGORY_ORDER.forEach(cat => {
+            const toggle = $(`toggle-${cat}`);
+            if (!toggle) return;
+
+            toggle.classList.toggle('is-disabled', !state.resultsReady);
+            toggle.setAttribute('aria-disabled', String(!state.resultsReady));
+            toggle.tabIndex = state.resultsReady ? 0 : -1;
+        });
+
+        if (!state.resultsReady) {
+            closeAllCategoryAccordions();
+        }
+    }
+
+    function bindCategoryAccordionInteractions() {
+        CATEGORY_ORDER.forEach(cat => {
+            const toggle = $(`toggle-${cat}`);
+            if (!toggle) return;
+
+            toggle.onclick = () => {
+                if (!state.resultsReady) return;
+                const body = $(`body-${cat}`);
+                setCategoryExpanded(cat, !!body?.hidden);
+            };
+
+            toggle.onkeydown = (event) => {
+                if (!state.resultsReady) return;
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    const body = $(`body-${cat}`);
+                    setCategoryExpanded(cat, !!body?.hidden);
+                }
+            };
+        });
+
+        updateCategoryAccordionAvailability();
     }
 
     function updateProbeItem(probeId, status, latency, note) {
@@ -1016,6 +1080,7 @@
     function resetResults() {
         state.controlsHealthy = false;
         state.controlsPassed = 0;
+        state.resultsReady = false;
         CATEGORY_ORDER.forEach(cat => {
             getCategoryItems(cat).forEach(p => {
                 state.results[cat][p.id] = { status: 'pending', latency: 0, note: 'Chưa chạy' };
@@ -1039,6 +1104,7 @@
         const scoreWrap = document.querySelector('.score-ring-wrap');
         if (scoreWrap) scoreWrap.classList.remove('score-complete');
 
+        updateCategoryAccordionAvailability();
         updateDashboard();
 
         // Hide report
@@ -1421,6 +1487,7 @@
         setText('phaseText', 'Đang đồng bộ danh sách filter mới nhất...');
         await ensureAutoDataLoaded();
 
+        state.resultsReady = false;
         initState();
         renderCategories();
         setText('probeCount', getAllProbeCount());
@@ -1453,6 +1520,10 @@
 
         const scoreWrap = document.querySelector('.score-ring-wrap');
         if (scoreWrap) scoreWrap.classList.add('score-complete');
+
+        state.resultsReady = true;
+        updateCategoryAccordionAvailability();
+        closeAllCategoryAccordions();
 
         // Generate report
         generateReport();
