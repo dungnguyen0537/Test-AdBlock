@@ -830,7 +830,7 @@
         const avg = (ads + tracking + malware + spam + (telemetry || 0)) / 5;
 
         if (avg >= 75 && ads >= 70 && tracking >= 70) {
-            return { title: 'Bộ lọc cực mạnh — Nhiều lớp chặn', summary: 'Thiết bị có DNS filter mạnh kết hợp browser blocker rất tốt. Hầu hết quảng cáo, tracker, malware và spam đều bị chặn.', grade: 'S' };
+            return { title: 'Bộ lọc cực mạnh — Bảo mật cao', summary: 'Thiết bị có DNS filter mạnh kết hợp browser blocker rất tốt. Hầu hết quảng cáo, tracker, malware và spam đều bị chặn.', grade: 'S' };
         }
         if (adult >= 70 && (malware >= 40 || spam >= 35)) {
             return { title: 'Family Filter / Parental DNS', summary: 'Nội dung nhạy cảm bị chặn mạnh, thường thấy ở Family DNS hoặc parental control. Có thể kết hợp chặn ads/malware.', grade: 'A' };
@@ -1133,7 +1133,7 @@
         if (!btn || !label) return;
         btn.disabled = running;
         btn.classList.toggle('is-running', running);
-        label.textContent = running ? 'Đang đánh giá...' : 'Chạy lại bài test';
+        label.textContent = running ? 'Đang kiểm tra...' : 'Kiểm tra lại';
     }
 
     async function runCategory(cat) {
