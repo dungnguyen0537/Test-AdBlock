@@ -568,9 +568,15 @@ body.is-modal-open {
 
 .overview-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
     gap: 16px;
     margin-bottom: 36px;
+}
+
+.overview-stack {
+    display: grid;
+    gap: 16px;
+    align-content: start;
 }
 
 .overview-card {
@@ -582,6 +588,10 @@ body.is-modal-open {
     backdrop-filter: var(--glass-blur);
     -webkit-backdrop-filter: var(--glass-blur);
     transition: border-color var(--transition);
+}
+
+.overview-card-reference {
+    height: 100%;
 }
 
 .overview-card:hover {
@@ -1910,6 +1920,10 @@ body.is-modal-open {
         grid-template-columns: 1fr;
     }
 
+    .overview-stack {
+        grid-template-columns: 1fr;
+    }
+
     .category-grid {
         grid-template-columns: 1fr;
     }
@@ -2025,7 +2039,7 @@ body.is-modal-open {
         order: 2;
     }
     .overview-grid {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: 1fr;
     }
 }
 
