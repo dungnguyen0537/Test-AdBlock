@@ -1422,6 +1422,15 @@ body {
     letter-spacing: 0.02em;
 }
 
+.footer-version {
+    margin-top: 8px;
+    font-size: 0.74rem;
+    color: var(--text-muted);
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    opacity: 0.82;
+}
+
 /* ─── Responsive ─── */
 
 @media (max-width: 1024px) {
