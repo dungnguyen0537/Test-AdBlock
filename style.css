@@ -462,6 +462,19 @@ body {
     border: 1px solid var(--border);
 }
 
+.mini-stat-clickable {
+    cursor: pointer;
+    transition: border-color var(--transition), background var(--transition), transform var(--transition);
+}
+
+.mini-stat-clickable:hover,
+.mini-stat-clickable:focus-visible,
+.mini-stat-clickable.is-active {
+    border-color: rgba(244,63,94,0.22);
+    background: rgba(244,63,94,0.07);
+    transform: translateY(-1px);
+}
+
 .mini-label {
     display: block;
     font-size: 0.7rem;
@@ -900,6 +913,18 @@ body {
     background: rgba(255,255,255,0.03);
 }
 
+.report-stat-card.stat-clickable {
+    cursor: pointer;
+    transition: border-color var(--transition), transform var(--transition), background var(--transition);
+}
+
+.report-stat-card.stat-clickable:hover,
+.report-stat-card.stat-clickable:focus-visible,
+.report-stat-card.stat-clickable.is-open {
+    border-color: rgba(244,63,94,0.24);
+    transform: translateY(-1px);
+}
+
 .report-stat-card.stat-blocked { background: rgba(16,185,129,0.08); }
 .report-stat-card.stat-partial { background: rgba(245,158,11,0.08); }
 .report-stat-card.stat-passed  { background: rgba(244,63,94,0.08); }
@@ -924,6 +949,123 @@ body {
     margin-top: 8px;
     font-size: 0.85rem;
     color: var(--text-secondary);
+}
+
+.report-stat-action {
+    margin-top: 10px;
+    font-size: 0.76rem;
+    color: rgba(255,255,255,0.7);
+}
+
+.report-passed-panel {
+    margin-bottom: 18px;
+    padding: 18px;
+    border-radius: var(--radius-sm);
+    border: 1px solid rgba(244,63,94,0.16);
+    background: rgba(244,63,94,0.05);
+}
+
+.report-passed-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.report-passed-head h4 {
+    color: #fff;
+    font-size: 1rem;
+}
+
+.report-passed-head p {
+    margin-top: 6px;
+    color: var(--text-secondary);
+    font-size: 0.84rem;
+    line-height: 1.65;
+}
+
+.report-copy-button {
+    border: 1px solid rgba(244,63,94,0.24);
+    background: rgba(244,63,94,0.12);
+    color: #fff;
+    border-radius: 999px;
+    padding: 10px 16px;
+    font: inherit;
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background var(--transition), border-color var(--transition), transform var(--transition);
+    white-space: nowrap;
+}
+
+.report-copy-button:hover:not(:disabled),
+.report-copy-button:focus-visible:not(:disabled) {
+    background: rgba(244,63,94,0.18);
+    border-color: rgba(244,63,94,0.4);
+    transform: translateY(-1px);
+}
+
+.report-copy-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.report-passed-groups {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.report-passed-group {
+    padding: 16px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: rgba(255,255,255,0.03);
+}
+
+.report-passed-group-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.report-passed-group-head strong {
+    color: #fff;
+    font-size: 0.92rem;
+}
+
+.report-passed-group-head span {
+    color: var(--text-muted);
+    font-size: 0.76rem;
+}
+
+.report-passed-lines {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.report-passed-line {
+    padding: 9px 11px;
+    border-radius: 10px;
+    border: 1px solid rgba(244,63,94,0.14);
+    background: rgba(10,14,23,0.35);
+    color: var(--text);
+    font-size: 0.8rem;
+    line-height: 1.55;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    word-break: break-all;
+}
+
+.report-passed-empty {
+    padding: 14px 16px;
+    border-radius: 12px;
+    border: 1px dashed rgba(255,255,255,0.12);
+    color: var(--text-secondary);
+    font-size: 0.85rem;
 }
 
 .report-verdict {
@@ -1370,6 +1512,13 @@ body {
     .category-score-wrap {
         text-align: left;
         align-self: flex-start;
+    }
+    .report-passed-head {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .report-passed-groups {
+        grid-template-columns: 1fr;
     }
 }
 
