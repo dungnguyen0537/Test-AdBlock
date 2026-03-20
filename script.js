@@ -51,6 +51,13 @@
 
     function setText(id, v) { const el = $(id); if (el) el.textContent = v; }
 
+    function setRunStatus(text, mode) {
+        const chip = $('runStatus');
+        const label = $('runStatusLabel');
+        if (chip) chip.className = `chip status-chip ${mode || 'is-idle'}`;
+        if (label) label.textContent = text;
+    }
+
     function formatRunTime(v) {
         if (!v) return '-';
         return new Date(v).toLocaleString('vi-VN', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit', second:'2-digit' });
@@ -441,6 +448,8 @@
     /* ─── Run & Reset ─── */
 
     function resetResults() {
+        state.controlsHealthy = false;
+        state.controlsPassed = 0;
         CATEGORY_ORDER.forEach(cat => {
             getCategoryItems(cat).forEach(p => {
                 state.results[cat][p.id] = { status: 'pending', latency: 0, note: 'Chưa chạy' };
@@ -449,11 +458,23 @@
         });
         state.progress.total = getAllProbeCount();
         state.progress.done = 0;
+        setText('controlStatus', '-');
+        setRunStatus('Sẵn sàng', 'is-idle');
+
+        const controlEl = $('controlIndicator');
+        if (controlEl) controlEl.className = 'control-indicator';
+
+        const scoreWrap = document.querySelector('.score-ring-wrap');
+        if (scoreWrap) scoreWrap.classList.remove('score-complete');
+
         updateDashboard();
 
         // Hide report
         const report = $('reportSection');
         if (report) report.style.display = 'none';
+
+        const content = $('reportContent');
+        if (content) content.innerHTML = '';
     }
 
     function setRunningState(running) {
@@ -679,10 +700,7 @@
         state.startTime = Date.now();
         resetResults();
         setRunningState(true);
-
-        setText('runStatus', 'Đang kiểm tra');
-        const statusChip = $('runStatus');
-        if (statusChip) statusChip.className = 'chip chip-active';
+        setRunStatus('Đang kiểm tra', 'is-active');
 
         setText('lastRunAt', formatRunTime(state.startTime));
         setText('phaseText', 'Đang xác minh đường mạng...');
@@ -696,8 +714,10 @@
         }
 
         setRunningState(false);
-        if (statusChip) statusChip.className = 'chip';
-        setText('runStatus', state.controlsHealthy ? 'Hoàn tất' : 'Hoàn tất — cần xem lại');
+        setRunStatus(
+            state.controlsHealthy ? 'Hoàn tất' : 'Hoàn tất — cần xem lại',
+            state.controlsHealthy ? 'is-complete' : 'is-warning'
+        );
         setText('phaseText', `Đã hoàn tất ${getAllProbeCount()} probe.`);
         updateDashboard();
 
@@ -724,6 +744,7 @@
         setText('lastRunAt', '-');
         setText('controlStatus', '-');
         setText('requestMode', 'Request thật qua DNS / filter');
+        setRunStatus('Sẵn sàng', 'is-idle');
         updateDashboard();
 
         const circle = $('scoreRingCircle');
