@@ -213,6 +213,7 @@
 
     let autoDataPromise = null;
     let autoDataRefreshTimer = 0;
+    let summaryModalReturnFocus = null;
 
     const CATEGORY_ICONS = {
         ads: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 11 18-5v12L3 13v-2z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg>`,
@@ -937,6 +938,129 @@
         return { title: 'Bộ lọc yếu', summary: 'Một số domain bị chặn nhưng phần lớn vẫn đi qua. Nên cân nhắc bổ sung thêm danh sách filter.', grade: 'D' };
     }
 
+    function getScoreToneClass(score) {
+        if (score >= 70) return 'score-high';
+        if (score >= 40) return 'score-mid';
+        return 'score-low';
+    }
+
+    function getConfidenceScore(overview) {
+        return Math.max(10, Math.min(95, Math.round(
+            30 + (state.controlsHealthy ? 20 : -5) + overview.tested * 0.5 - overview.uncertain * 3
+        )));
+    }
+
+    function buildReportSnapshot() {
+        const overview = collectOverview();
+        const overallScore = overview.tested
+            ? Math.round(((overview.blocked + overview.partial * 0.5) / overview.tested) * 100)
+            : 0;
+
+        const scores = {};
+        CATEGORY_ORDER.forEach(cat => {
+            scores[cat] = getEffectiveScore(getCategoryStats(cat));
+        });
+
+        return {
+            overview,
+            overallScore,
+            profile: classifyProfile(scores),
+            finishedAt: Date.now(),
+            elapsed: state.startTime ? ((Date.now() - state.startTime) / 1000).toFixed(1) : '0.0',
+            confidence: getConfidenceScore(overview),
+        };
+    }
+
+    function closeSummaryModal(restoreFocus = true) {
+        const modal = $('summaryModal');
+        if (!modal) return;
+
+        modal.hidden = true;
+        modal.setAttribute('aria-hidden', 'true');
+        document.body.classList.remove('is-modal-open');
+
+        if (restoreFocus && summaryModalReturnFocus && typeof summaryModalReturnFocus.focus === 'function') {
+            summaryModalReturnFocus.focus();
+        }
+
+        summaryModalReturnFocus = null;
+    }
+
+    function openSummaryModal(snapshot) {
+        const modal = $('summaryModal');
+        const dialog = $('summaryModalDialog');
+        const score = $('summaryModalScore');
+        const title = $('summaryModalTitle');
+        const description = $('summaryModalDescription');
+        const meta = $('summaryModalMeta');
+        const stats = $('summaryModalStats');
+        const version = $('summaryModalVersion');
+
+        if (!modal || !dialog || !score || !title || !description || !meta || !stats) return;
+
+        summaryModalReturnFocus = document.activeElement instanceof HTMLElement
+            ? document.activeElement
+            : null;
+
+        score.className = `summary-modal-score ${getScoreToneClass(snapshot.overallScore)}`;
+        score.textContent = `${snapshot.overallScore}%`;
+        title.textContent = snapshot.profile.title;
+        description.textContent = snapshot.profile.summary;
+        meta.textContent = `Hoàn tất trong ${snapshot.elapsed}s · ${formatRunTime(snapshot.finishedAt)} · ${snapshot.overview.total} probe · Độ tin cậy ${snapshot.confidence}%`;
+        if (version) version.textContent = `Version update: v${APP_VERSION}`;
+
+        stats.innerHTML = `
+            <div class="summary-modal-stat is-blocked">
+                <span class="summary-modal-stat-label">Đã chặn</span>
+                <strong class="summary-modal-stat-value">${snapshot.overview.blocked}</strong>
+                <span class="summary-modal-stat-note">${snapshot.overview.tested ? Math.round(snapshot.overview.blocked / snapshot.overview.tested * 100) : 0}% tổng số probe</span>
+            </div>
+            <div class="summary-modal-stat is-partial">
+                <span class="summary-modal-stat-label">Một phần</span>
+                <strong class="summary-modal-stat-value">${snapshot.overview.partial}</strong>
+                <span class="summary-modal-stat-note">${snapshot.overview.tested ? Math.round(snapshot.overview.partial / snapshot.overview.tested * 100) : 0}% tổng số probe</span>
+            </div>
+            <div class="summary-modal-stat is-passed">
+                <span class="summary-modal-stat-label">Đi qua</span>
+                <strong class="summary-modal-stat-value">${snapshot.overview.passed}</strong>
+                <span class="summary-modal-stat-note">${snapshot.overview.tested ? Math.round(snapshot.overview.passed / snapshot.overview.tested * 100) : 0}% tổng số probe</span>
+            </div>
+            <div class="summary-modal-stat is-control">
+                <span class="summary-modal-stat-label">Control OK</span>
+                <strong class="summary-modal-stat-value">${state.controlsPassed}/${DATA.controls.length}</strong>
+                <span class="summary-modal-stat-note">${state.controlsHealthy ? 'Đường mạng ổn định để kết luận' : 'Cần xem kỹ lại control probes'}</span>
+            </div>
+        `;
+
+        modal.hidden = false;
+        modal.setAttribute('aria-hidden', 'false');
+        document.body.classList.add('is-modal-open');
+        dialog.focus();
+    }
+
+    function bindSummaryModalInteractions() {
+        const modal = $('summaryModal');
+        const backdrop = $('summaryModalBackdrop');
+        const doneButton = $('summaryModalDone');
+        const report = $('reportSection');
+        if (!modal || !backdrop || !doneButton) return;
+
+        backdrop.onclick = () => closeSummaryModal();
+        doneButton.onclick = () => {
+            closeSummaryModal(false);
+            if (report) {
+                report.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        };
+
+        modal.addEventListener('keydown', event => {
+            if (event.key === 'Escape') {
+                event.preventDefault();
+                closeSummaryModal();
+            }
+        });
+    }
+
     /* ─── Animated Score Counter ─── */
 
     function animateNumber(elementId, targetValue, duration = 800) {
@@ -1170,6 +1294,7 @@
     /* ─── Run & Reset ─── */
 
     function resetResults() {
+        closeSummaryModal(false);
         state.controlsHealthy = false;
         state.controlsPassed = 0;
         state.resultsReady = false;
@@ -1369,7 +1494,7 @@
 
     /* ─── Report Generation ─── */
 
-    function generateReport() {
+    function generateReport({ scrollIntoView = true } = {}) {
         const report = $('reportSection');
         const content = $('reportContent');
         if (!report || !content) return;
@@ -1487,7 +1612,9 @@
 
         bindPassedDomainInteractions(passedGroups);
         report.style.display = 'block';
-        report.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        if (scrollIntoView) {
+            report.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
     }
 
     /* ─── Main Run ─── */
@@ -1538,8 +1665,9 @@
         updateCategoryAccordionAvailability();
         closeAllCategoryAccordions();
 
-        // Generate report
-        generateReport();
+        const snapshot = buildReportSnapshot();
+        generateReport({ scrollIntoView: false });
+        openSummaryModal(snapshot);
     };
 
     /* ─── Init ─── */
@@ -1558,6 +1686,7 @@
         setText('lastRunAt', '-');
         setText('controlStatus', '-');
         setText('footerVersion', `Version Update: v${APP_VERSION}`);
+        setText('summaryModalVersion', `Version update: v${APP_VERSION}`);
         setText('requestMode', 'Request thật qua DNS / filter');
         setRunStatus('Sẵn sàng', 'is-idle');
         updateDashboard();
@@ -1578,6 +1707,7 @@
             });
         });
 
+        bindSummaryModalInteractions();
         scheduleDailyAutoDataRefresh();
         void ensureAutoDataLoaded();
     }
