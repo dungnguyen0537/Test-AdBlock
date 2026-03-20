@@ -7,10 +7,9 @@
     const PROBE_TIMEOUT = 5000;
     const CONCURRENCY = 1; // Khách hàng yêu cầu chạy tuần tự thay vì song song
     const AUTO_PROBE_PREFIX = 'live';
-    const AUTO_DATA_CACHE_KEY = 'adblock-live-feed-cache-v2';
-    const AUTO_DATA_CACHE_VERSION = 2;
     const AUTO_DATA_TIMEOUT = 12000;
     const APP_VERSION = '1.0.1';
+    const APP_TIMEZONE = 'Asia/Ho_Chi_Minh';
     const CATEGORY_SPLIT_BREAKPOINT = '(min-width: 1025px)';
 
     const AUTO_FEEDS = [
@@ -213,6 +212,7 @@
     ];
 
     let autoDataPromise = null;
+    let autoDataRefreshTimer = 0;
 
     const CATEGORY_ICONS = {
         ads: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 11 18-5v12L3 13v-2z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg>`,
@@ -236,6 +236,7 @@
         autoDataMeta: {
             mode: 'static',
             totalAuto: 0,
+            dayKey: '',
         },
     };
 
@@ -285,7 +286,46 @@
     }
 
     function getTodayKey() {
-        return new Date().toISOString().slice(0, 10);
+        try {
+            const parts = new Intl.DateTimeFormat('en-CA', {
+                timeZone: APP_TIMEZONE,
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+            }).formatToParts(new Date());
+
+            const year = parts.find(part => part.type === 'year')?.value;
+            const month = parts.find(part => part.type === 'month')?.value;
+            const day = parts.find(part => part.type === 'day')?.value;
+
+            if (year && month && day) {
+                return `${year}-${month}-${day}`;
+            }
+        } catch {
+            // Fallback nếu Intl timeZone không khả dụng
+        }
+
+        const now = new Date();
+        const utcMs = now.getTime() + now.getTimezoneOffset() * 60000;
+        const vietnamNow = new Date(utcMs + 7 * 60 * 60000);
+        const year = vietnamNow.getUTCFullYear();
+        const month = String(vietnamNow.getUTCMonth() + 1).padStart(2, '0');
+        const day = String(vietnamNow.getUTCDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+
+    function getMsUntilNextVietnamMidnight() {
+        const now = new Date();
+        const utcMs = now.getTime() + now.getTimezoneOffset() * 60000;
+        const vietnamNow = new Date(utcMs + 7 * 60 * 60000);
+        const nextMidnightUtcMs = Date.UTC(
+            vietnamNow.getUTCFullYear(),
+            vietnamNow.getUTCMonth(),
+            vietnamNow.getUTCDate() + 1,
+            0, 0, 0, 0
+        ) - 7 * 60 * 60000;
+
+        return Math.max(1000, nextMidnightUtcMs - now.getTime());
     }
 
     function setRunStatus(text, mode) {
@@ -299,8 +339,6 @@
         const suffixByMode = {
             syncing: ' • đang đồng bộ',
             live: ' • live',
-            cache: ' • cache',
-            'stale-cache': ' • cache cũ',
         };
         const suffix = suffixByMode[state.autoDataMeta.mode] || '';
         return `Dữ liệu: ${DATA?.refreshedAt || '-'}${suffix}`;
@@ -456,31 +494,6 @@
         return picked;
     }
 
-    function readAutoDataCache() {
-        try {
-            const raw = window.localStorage.getItem(AUTO_DATA_CACHE_KEY);
-            if (!raw) return null;
-            const parsed = JSON.parse(raw);
-            if (parsed.version !== AUTO_DATA_CACHE_VERSION || !parsed.autoProbes) return null;
-            return parsed;
-        } catch {
-            return null;
-        }
-    }
-
-    function writeAutoDataCache(bundle) {
-        try {
-            window.localStorage.setItem(AUTO_DATA_CACHE_KEY, JSON.stringify({
-                version: AUTO_DATA_CACHE_VERSION,
-                day: bundle.day,
-                totalAuto: bundle.totalAuto,
-                autoProbes: bundle.autoProbes,
-            }));
-        } catch {
-            // Bỏ qua nếu localStorage bị chặn hoặc đầy
-        }
-    }
-
     async function fetchTextFeed(url, timeout = AUTO_DATA_TIMEOUT) {
         const controller = new AbortController();
         const timerId = window.setTimeout(() => controller.abort(), timeout);
@@ -587,41 +600,36 @@
         state.autoDataMeta = {
             mode,
             totalAuto: bundle.totalAuto || 0,
+            dayKey: bundle.day || getTodayKey(),
         };
     }
 
     async function ensureAutoDataLoaded() {
-        if (autoDataPromise) return autoDataPromise;
+        const todayKey = getTodayKey();
+        if (
+            autoDataPromise &&
+            state.autoDataMeta.dayKey === todayKey &&
+            (state.autoDataMeta.mode === 'live' || state.autoDataMeta.mode === 'syncing')
+        ) {
+            return autoDataPromise;
+        }
 
         state.autoDataMeta.mode = 'syncing';
+        state.autoDataMeta.dayKey = todayKey;
         setText('datasetVersion', getDatasetLabel());
 
         autoDataPromise = (async () => {
-            const cache = readAutoDataCache();
-            const todayKey = getTodayKey();
-
-            if (cache && cache.day === todayKey) {
-                applyAutoProbeBundle(cache, 'cache');
-                return cache;
-            }
-
             try {
                 const liveBundle = await loadLiveAutoProbeBundle();
                 if (liveBundle.feedsOk > 0) {
-                    writeAutoDataCache(liveBundle);
                     applyAutoProbeBundle(liveBundle, 'live');
                     return liveBundle;
                 }
             } catch {
-                // Sẽ fallback sang cache hoặc dữ liệu tĩnh bên dưới
+                // Nếu fetch lỗi sẽ fallback sang dữ liệu tĩnh bên dưới
             }
 
-            if (cache) {
-                applyAutoProbeBundle(cache, 'stale-cache');
-                return cache;
-            }
-
-            state.autoDataMeta = { mode: 'static', totalAuto: 0 };
+            state.autoDataMeta = { mode: 'static', totalAuto: 0, dayKey: todayKey };
             return {
                 day: DATA.refreshedAt || todayKey,
                 totalAuto: 0,
@@ -763,6 +771,24 @@
 
         const expandedCat = getExpandedCategoryId();
         renderCategories(expandedCat);
+    }
+
+    function scheduleDailyAutoDataRefresh(delayMs = getMsUntilNextVietnamMidnight()) {
+        if (autoDataRefreshTimer) {
+            window.clearTimeout(autoDataRefreshTimer);
+        }
+
+        autoDataRefreshTimer = window.setTimeout(async () => {
+            autoDataPromise = null;
+
+            if (state.isRunning) {
+                scheduleDailyAutoDataRefresh(60000);
+                return;
+            }
+
+            await ensureAutoDataLoaded();
+            scheduleDailyAutoDataRefresh();
+        }, delayMs);
     }
 
     function setCategoryExpanded(cat, expanded) {
@@ -1552,6 +1578,7 @@
             });
         });
 
+        scheduleDailyAutoDataRefresh();
         void ensureAutoDataLoaded();
     }
 
