@@ -5,12 +5,12 @@
     const CATEGORY_ORDER = ['ads', 'tracking', 'malware', 'adult', 'spam', 'telemetry'];
     const CONTROL_TIMEOUT = 4000;
     const PROBE_TIMEOUT = 5000;
-    const CONCURRENCY = 1; 
+    const CONCURRENCY = 1; // Khách hàng yêu cầu chạy tuần tự thay vì song song
     const AUTO_PROBE_PREFIX = 'live';
     const AUTO_DATA_CACHE_KEY = 'adblock-live-feed-cache-v2';
     const AUTO_DATA_CACHE_VERSION = 2;
     const AUTO_DATA_TIMEOUT = 12000;
-    const APP_VERSION = '1.0.2';
+    const APP_VERSION = '1.0.1';
 
     const AUTO_FEEDS = [
         {
