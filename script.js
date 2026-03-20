@@ -1306,80 +1306,6 @@
 
         const elapsed = ((Date.now() - state.startTime) / 1000).toFixed(1);
 
-        // Build per-category breakdown
-        let categoryBreakdown = '';
-        CATEGORY_ORDER.forEach(cat => {
-            const meta = DATA.categories[cat];
-            const stats = getCategoryStats(cat);
-            const score = scores[cat];
-            const items = getCategoryItems(cat);
-
-            // Lists of blocked and passed items
-            const blockedItems = [];
-            const passedItems = [];
-            const partialItems = [];
-
-            items.forEach(p => {
-                const r = state.results[cat][p.id];
-                if (!r) return;
-                if (r.status === 'blocked') blockedItems.push(p);
-                else if (r.status === 'passed') passedItems.push(p);
-                else if (r.status === 'partial') partialItems.push(p);
-            });
-
-            const scoreClass = score >= 70 ? 'score-high' : score >= 40 ? 'score-mid' : 'score-low';
-
-            categoryBreakdown += `
-                <div class="report-category">
-                    <div class="report-cat-header">
-                        <div class="report-cat-left">
-                            <div class="category-icon-wrap tone-${meta.tone}">${CATEGORY_ICONS[cat] || ''}</div>
-                            <div>
-                                <h4>${escapeHtml(meta.label)}</h4>
-                                <span class="report-cat-summary">${stats.blocked} bị chặn · ${stats.partial} một phần · ${stats.passed} đi qua · Tổng ${stats.total}</span>
-                            </div>
-                        </div>
-                        <div class="report-cat-score ${scoreClass}">${score}%</div>
-                    </div>
-
-                    <div class="report-bar-wrap">
-                        <div class="report-bar">
-                            <div class="report-bar-blocked" style="width:${stats.total ? (stats.blocked/stats.total*100) : 0}%"></div>
-                            <div class="report-bar-partial" style="width:${stats.total ? (stats.partial/stats.total*100) : 0}%"></div>
-                            <div class="report-bar-passed" style="width:${stats.total ? (stats.passed/stats.total*100) : 0}%"></div>
-                        </div>
-                    </div>
-
-                    ${blockedItems.length > 0 ? `
-                        <div class="report-list-group">
-                            <div class="report-list-label blocked-label">✓ Đã chặn (${blockedItems.length})</div>
-                            <div class="report-domain-list">
-                                ${blockedItems.map(p => `<span class="report-domain blocked-domain">${escapeHtml(p.kind === 'hostname' ? p.target : p.name)}</span>`).join('')}
-                            </div>
-                        </div>
-                    ` : ''}
-
-                    ${partialItems.length > 0 ? `
-                        <div class="report-list-group">
-                            <div class="report-list-label partial-label">◐ Chặn một phần (${partialItems.length})</div>
-                            <div class="report-domain-list">
-                                ${partialItems.map(p => `<span class="report-domain partial-domain">${escapeHtml(p.kind === 'hostname' ? p.target : p.name)}</span>`).join('')}
-                            </div>
-                        </div>
-                    ` : ''}
-
-                    ${passedItems.length > 0 ? `
-                        <div class="report-list-group">
-                            <div class="report-list-label passed-label">✗ Chưa bị chặn (${passedItems.length})</div>
-                            <div class="report-domain-list">
-                                ${passedItems.map(p => `<span class="report-domain passed-domain">${escapeHtml(p.kind === 'hostname' ? p.target : p.name)}</span>`).join('')}
-                            </div>
-                        </div>
-                    ` : ''}
-                </div>
-            `;
-        });
-
         // Recommendations
         let recommendations = '';
         const recList = [];
@@ -1475,11 +1401,6 @@
             <p class="report-verdict">${escapeHtml(profile.summary)}</p>
 
             ${recommendations}
-
-            <div class="report-breakdown">
-                <h4>Chi tiết theo từng nhóm</h4>
-                ${categoryBreakdown}
-            </div>
         `;
 
         bindPassedDomainInteractions(passedGroups);
