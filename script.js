@@ -389,6 +389,30 @@
         });
     }
 
+    function classifyHostnameProbe(fetchResult, imgResult) {
+        if (fetchResult.ok) {
+            if (imgResult.state === 'loaded') {
+                return { status: 'passed', latency: imgResult.latency, note: 'Favicon tải được — host reachable qua DNS hiện tại' };
+            }
+            if (imgResult.state === 'error-fast') {
+                return { status: 'passed', latency: fetchResult.latency, note: 'Fetch thành công, host reachable nhưng favicon không hợp lệ hoặc không tồn tại' };
+            }
+            if (imgResult.state === 'error-slow') {
+                return { status: 'partial', latency: imgResult.latency, note: 'Host có phản hồi nhưng không ổn định hoặc bị lọc một phần' };
+            }
+            return { status: 'partial', latency: imgResult.latency, note: 'Fetch thành công nhưng tải ảnh bị timeout — có thể bị lọc một phần' };
+        }
+
+        if (imgResult.state === 'loaded') {
+            return { status: 'partial', latency: imgResult.latency, note: 'Ảnh vẫn tải được dù fetch thất bại — kết quả chưa hoàn toàn chắc chắn' };
+        }
+        if (fetchResult.isTimeout || imgResult.state === 'timeout') {
+            return { status: 'partial', latency: Math.max(fetchResult.latency, imgResult.latency), note: 'Timeout khi truy cập host — có thể bị chặn hoặc mạng phản hồi chậm' };
+        }
+
+        return { status: 'blocked', latency: Math.max(fetchResult.latency, imgResult.latency), note: 'Fetch thất bại và ảnh lỗi nhanh — nhiều khả năng domain đã bị DNS/filter chặn' };
+    }
+
     async function runSingleProbe(probe) {
         const baseUrl = probe.kind === 'hostname'
             ? `https://${probe.target}/favicon.ico`
@@ -396,34 +420,25 @@
 
         const fetchResult = await fetchProbe(baseUrl, PROBE_TIMEOUT);
 
-        if (fetchResult.ok) {
-            return { status: 'passed', latency: fetchResult.latency, note: fetchResult.reason };
-        }
-
-        if (!state.controlsHealthy) {
-            return { status: 'uncertain', latency: fetchResult.latency, note: 'Control probes chưa ổn định' };
-        }
-
         if (probe.kind === 'url') {
+            if (fetchResult.ok) {
+                return { status: 'passed', latency: fetchResult.latency, note: fetchResult.reason };
+            }
+            if (!state.controlsHealthy) {
+                return { status: 'uncertain', latency: fetchResult.latency, note: 'Control probes chưa ổn định' };
+            }
             if (fetchResult.isTimeout) {
                 return { status: 'partial', latency: fetchResult.latency, note: 'Timeout — có thể bị chặn hoặc server chậm' };
             }
             return { status: 'blocked', latency: fetchResult.latency, note: fetchResult.reason };
         }
 
+        if (!state.controlsHealthy) {
+            return { status: 'uncertain', latency: fetchResult.latency, note: 'Control probes chưa ổn định' };
+        }
+
         const imgResult = await imageProbe(baseUrl, PROBE_TIMEOUT - 800);
-
-        if (imgResult.state === 'loaded') {
-            return { status: 'passed', latency: imgResult.latency, note: 'Ảnh tải được — request đi qua mạng' };
-        }
-        if (imgResult.state === 'error-fast') {
-            return { status: 'passed', latency: imgResult.latency, note: 'DNS resolved — server phản hồi' };
-        }
-        if (imgResult.state === 'error-slow') {
-            return { status: 'partial', latency: imgResult.latency, note: 'Phản hồi chậm — có thể bị lọc một phần' };
-        }
-
-        return { status: 'blocked', latency: fetchResult.latency, note: 'Cả fetch và image đều thất bại — bị chặn DNS' };
+        return classifyHostnameProbe(fetchResult, imgResult);
     }
 
     /* ─── Control Probes ─── */
