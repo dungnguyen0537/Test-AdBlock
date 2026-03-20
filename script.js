@@ -5,7 +5,7 @@
     const CATEGORY_ORDER = ['ads', 'tracking', 'malware', 'adult', 'spam', 'telemetry'];
     const CONTROL_TIMEOUT = 4000;
     const PROBE_TIMEOUT = 5000;
-    const CONCURRENCY = 1; // Khách hàng yêu cầu chạy tuần tự thay vì song song
+    const CONCURRENCY = 1;
     const AUTO_PROBE_PREFIX = 'live';
     const AUTO_DATA_CACHE_KEY = 'adblock-live-feed-cache-v2';
     const AUTO_DATA_CACHE_VERSION = 2;
@@ -843,7 +843,7 @@
         const avg = (ads + tracking + malware + spam + (telemetry || 0)) / 5;
 
         if (avg >= 75 && ads >= 70 && tracking >= 70) {
-            return { title: 'Bộ lọc cực mạnh — Nhiều lớp chặn', summary: 'Thiết bị có DNS filter mạnh kết hợp browser blocker rất tốt. Hầu hết quảng cáo, tracker, malware và spam đều bị chặn.', grade: 'S' };
+            return { title: 'Bộ lọc cực mạnh — Bảo mật cao', summary: 'Thiết bị có DNS filter mạnh kết hợp browser blocker rất tốt. Hầu hết quảng cáo, tracker, malware và spam đều bị chặn.', grade: 'S' };
         }
         if (adult >= 70 && (malware >= 40 || spam >= 35)) {
             return { title: 'Family Filter / Parental DNS', summary: 'Nội dung nhạy cảm bị chặn mạnh, thường thấy ở Family DNS hoặc parental control. Có thể kết hợp chặn ads/malware.', grade: 'A' };
@@ -1492,7 +1492,7 @@
         content.innerHTML = `
                 <div class="report-header">
                 <div class="report-title-area">
-                    <h3>📊 Báo cáo đánh giá bộ lọc</h3>
+                    <h3>📊 Báo cáo kiểm tra bộ lọc</h3>
                     <span class="report-time">Hoàn tất trong ${elapsed}s · ${formatRunTime(completedAt)} · ${overview.total} domain đã kiểm tra</span>
                 </div>
                 <div class="report-overall">
