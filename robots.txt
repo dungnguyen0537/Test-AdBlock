@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+# Add your public sitemap URL here after deployment.
