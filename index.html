@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Test AdBlocker - Kiểm Tra AdBlock & DNS | DShineeTools</title>
-    <meta name="description" content="Test AdBlocker là công cụ của DShineeTools do DShinee Dev phát triển, giúp kiểm tra 160+ domain quảng cáo, tracker, malware, phishing, spam và telemetry để đánh giá bộ lọc AdBlock và DNS trên thiết bị.">
-    <meta name="keywords" content="Test AdBlocker, DShineeTools, DShinee Dev, AdBlock, DNS filter, ad blocker test, kiểm tra AdBlock, kiểm tra DNS, trình chặn quảng cáo">
+    <title>Test AdBlocker - Kiểm tra AdBlock & DNS | DShineeTools</title>
+    <meta name="description" content="Test AdBlocker là công cụ của DShineeTools do DShinee Dev phát triển, giúp kiểm tra hơn 160 domain quảng cáo, tracker, malware, phishing, spam và telemetry để đánh giá bộ lọc AdBlock và DNS trên thiết bị.">
+    <meta name="keywords" content="Test AdBlocker, DShineeTools, DShinee Dev, AdBlock, DNS filter, kiểm tra AdBlock, kiểm tra DNS, trình chặn quảng cáo">
     <meta name="author" content="DShinee Dev">
     <meta name="creator" content="DShinee Dev">
     <meta name="publisher" content="DShineeTools">
@@ -18,12 +18,16 @@
     <meta property="og:locale" content="vi_VN">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="DShineeTools">
-    <meta property="og:title" content="Test AdBlocker - Kiểm Tra AdBlock & DNS | DShineeTools">
-    <meta property="og:description" content="Công cụ do DShinee Dev phát triển để kiểm tra trình chặn quảng cáo gồm domain quảng cáo, tracker, malware, phishing, spam và telemetry, từ đó đánh giá chính xác AdBlock và DNS filter trên thiết bị.">
+    <meta property="og:title" content="Test AdBlocker - Kiểm tra AdBlock & DNS | DShineeTools">
+    <meta property="og:description" content="Công cụ do DShinee Dev phát triển để kiểm tra hơn 160 domain quảng cáo, tracker, malware, phishing, spam và telemetry, từ đó đánh giá chính xác AdBlock và DNS filter trên thiết bị.">
+    <meta property="og:image" content="logo.png">
+    <meta property="og:image:alt" content="Logo Test AdBlocker">
     <meta name="twitter:card" content="summary">
-    <meta name="twitter:title" content="Test AdBlocker - Kiểm Tra AdBlock & DNS | DShineeTools">
-    <meta name="twitter:description" content="Kiểm tra AdBlock và DNS filter với 160+ request thật qua các nhóm quảng cáo, tracker, malware, phishing, spam và telemetry.">
-    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <meta name="twitter:title" content="Test AdBlocker - Kiểm tra AdBlock & DNS | DShineeTools">
+    <meta name="twitter:description" content="Kiểm tra AdBlock và DNS filter với hơn 160 request thật qua các nhóm quảng cáo, tracker, malware, phishing, spam và telemetry.">
+    <meta name="twitter:image" content="logo.png">
+    <link rel="icon" type="image/png" href="logo.png">
+    <link rel="apple-touch-icon" href="logo.png">
     <script type="application/ld+json">
         {
             "@context": "https://schema.org",
@@ -33,17 +37,19 @@
                     "@id": "#organization",
                     "name": "DShineeTools",
                     "alternateName": "DShinee Dev",
-                    "description": "DShineeTools la he thong cong cu do DShinee Dev xay dung va phat trien."
+                    "description": "DShineeTools là hệ thống công cụ do DShinee Dev xây dựng và phát triển.",
+                    "logo": "logo.png"
                 },
                 {
                     "@type": "WebSite",
                     "@id": "#website",
                     "name": "Test AdBlocker",
                     "inLanguage": "vi",
-                    "description": "Website kiem tra AdBlock va DNS filter tren trinh duyet voi cac request thuc te.",
+                    "description": "Website kiểm tra AdBlock và DNS filter trên trình duyệt với các request thực tế.",
                     "publisher": {
                         "@id": "#organization"
-                    }
+                    },
+                    "image": "logo.png"
                 },
                 {
                     "@type": "SoftwareApplication",
@@ -59,14 +65,15 @@
                     "publisher": {
                         "@id": "#organization"
                     },
-                    "description": "Cong cu web giup danh gia muc do hoat dong cua bo loc AdBlock va DNS thong qua hon 160 domain quang cao, tracker, malware, phishing, spam va telemetry.",
+                    "image": "logo.png",
+                    "description": "Công cụ web giúp đánh giá mức độ hoạt động của bộ lọc AdBlock và DNS thông qua hơn 160 domain quảng cáo, tracker, malware, phishing, spam và telemetry.",
                     "keywords": [
                         "Test AdBlocker",
                         "DShineeTools",
                         "DShinee Dev",
                         "AdBlock",
                         "DNS filter",
-                        "kiem tra AdBlock"
+                        "kiểm tra AdBlock"
                     ],
                     "offers": {
                         "@type": "Offer",
@@ -97,7 +104,7 @@
                 </div>
                 <h1>Test AdBlocker kiểm tra<br>AdBlock & DNS trên thiết bị</h1>
                 <p class="hero-desc">
-                    Test AdBlocker là hệ thống của DShineeTools do DShinee Dev phát triển, gửi 160+ request thật tới
+                    Test AdBlocker là hệ thống của DShineeTools do DShinee Dev phát triển, gửi hơn 160 request thật tới
                     các domain quảng cáo, tracker, malware, phishing, spam và telemetry. Mọi request đều đi qua đường
                     DNS và bộ lọc hiện tại trên thiết bị để cho kết quả chính xác.
                 </p>
@@ -136,8 +143,10 @@
                             <circle class="score-ring-fill" id="scoreRingCircle" cx="60" cy="60" r="54"/>
                         </svg>
                         <div class="score-ring-value">
-                            <span id="scoreNumber">0</span>
-                            <small>%</small>
+                            <div class="score-ring-value-main">
+                                <span id="scoreNumber">0</span>
+                                <small>%</small>
+                            </div>
                         </div>
                     </div>
                     <div class="score-copy">
@@ -239,6 +248,36 @@
             <p class="footer-version" id="footerVersion">Version update: v1.0.1</p>
         </div>
     </footer>
+
+    <!-- Summary Modal -->
+    <div class="summary-modal" id="summaryModal" hidden aria-hidden="true">
+        <div class="summary-modal-backdrop" id="summaryModalBackdrop"></div>
+        <div class="summary-modal-dialog" id="summaryModalDialog" role="dialog" aria-modal="true" aria-labelledby="summaryModalTitle" tabindex="-1">
+            <div class="summary-modal-shell">
+                <div class="summary-modal-top">
+                    <span class="summary-modal-kicker">Báo cáo tổng quan</span>
+                    <div class="summary-modal-score score-mid" id="summaryModalScore">0%</div>
+                </div>
+
+                <h2 class="summary-modal-title" id="summaryModalTitle">Đã hoàn tất bài test</h2>
+                <p class="summary-modal-description" id="summaryModalDescription">
+                    Báo cáo tổng quan của lần kiểm tra sẽ hiển thị tại đây sau khi hoàn tất.
+                </p>
+                <p class="summary-modal-meta" id="summaryModalMeta">Chưa có dữ liệu để hiển thị.</p>
+
+                <div class="summary-modal-stats" id="summaryModalStats"></div>
+
+                <div class="summary-modal-signature">
+                    <div class="footer-brand">DShineeTools</div>
+                    <div class="footer-brand-line" aria-hidden="true"></div>
+                    <p class="footer-copy">© 2026 DShinee Dev. All Rights Reserved.</p>
+                    <p class="footer-version" id="summaryModalVersion">Version update: v1.0.1</p>
+                </div>
+
+                <button class="summary-modal-button" id="summaryModalDone" type="button">Hoàn tất</button>
+            </div>
+        </div>
+    </div>
 
     <script src="data.js"></script>
     <script src="script.js"></script>
