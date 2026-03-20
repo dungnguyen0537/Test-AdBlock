@@ -1,7 +1,3 @@
-/* ═══════════════════════════════════════════
-   AdBlock & DNS Filter Assessment
-   Dark Premium Theme
-   ═══════════════════════════════════════════ */
 
 :root {
     --bg-deep: #0a0e17;
@@ -1644,31 +1640,199 @@ body.is-modal-open {
 
 @media (max-width: 768px) {
     .summary-modal {
-        padding: 18px;
+        padding: 12px;
+        align-items: start;
+    }
+
+    .summary-modal-dialog {
+        width: min(100%, 420px);
+        max-height: calc(100vh - 24px);
     }
 
     .summary-modal-shell {
-        padding: 22px;
-        border-radius: 20px;
+        padding: 16px 16px 14px;
+        border-radius: 18px;
     }
 
     .summary-modal-top {
-        flex-direction: column;
-        align-items: flex-start;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 10px;
+        flex-wrap: nowrap;
+    }
+
+    .summary-modal-kicker {
+        padding: 6px 11px;
+        font-size: 0.64rem;
+        letter-spacing: 0.06em;
+    }
+
+    .summary-modal-score {
+        min-width: 68px;
+        padding: 9px 12px;
+        border-radius: 14px;
+        font-size: 1.1rem;
+        margin-left: auto;
+        flex-shrink: 0;
+    }
+
+    .summary-modal-title {
+        font-size: clamp(1.22rem, 5.6vw, 1.72rem);
+        line-height: 1.05;
+    }
+
+    .summary-modal-description {
+        margin-top: 8px;
+        font-size: 0.86rem;
+        line-height: 1.48;
+    }
+
+    .summary-modal-meta {
+        margin-top: 8px;
+        font-size: 0.75rem;
+        line-height: 1.42;
     }
 
     .summary-modal-stats {
         grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+        margin-top: 14px;
+    }
+
+    .summary-modal-stat {
+        padding: 11px 12px;
+        border-radius: 14px;
+    }
+
+    .summary-modal-stat-label {
+        font-size: 0.66rem;
+        letter-spacing: 0.05em;
+    }
+
+    .summary-modal-stat-value {
+        margin-top: 6px;
+        font-size: 1.15rem;
+    }
+
+    .summary-modal-stat-note {
+        margin-top: 4px;
+        font-size: 0.72rem;
+        line-height: 1.35;
+    }
+
+    .summary-modal-signature {
+        margin-top: 14px;
+        padding: 16px 12px 12px;
+        border-radius: 16px;
     }
 
     .summary-modal-signature .footer-brand {
-        font-size: clamp(1.7rem, 9vw, 3rem);
+        font-size: clamp(1.35rem, 7.2vw, 2rem);
+        letter-spacing: 0.03em;
+    }
+
+    .summary-modal-signature .footer-brand-line {
+        width: min(220px, calc(100% - 44px));
+        margin-top: 10px;
+        margin-bottom: 10px;
+    }
+
+    .summary-modal-signature .footer-copy,
+    .summary-modal-signature .footer-version {
+        font-size: 0.72rem;
+        line-height: 1.4;
+    }
+
+    .summary-modal-button {
+        margin-top: 14px;
+        padding: 12px 16px;
+        font-size: 0.88rem;
     }
 }
 
 @media (max-width: 480px) {
     .summary-modal-stats {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .summary-modal-title {
+        font-size: clamp(1.16rem, 6vw, 1.46rem);
+    }
+}
+
+@media (max-width: 768px) and (max-height: 820px) {
+    .summary-modal {
+        padding: 10px;
+    }
+
+    .summary-modal-dialog {
+        max-height: calc(100vh - 20px);
+    }
+
+    .summary-modal-shell {
+        padding: 14px 14px 12px;
+    }
+
+    .summary-modal-top {
+        margin-bottom: 8px;
+    }
+
+    .summary-modal-description {
+        margin-top: 6px;
+        font-size: 0.82rem;
+        line-height: 1.38;
+    }
+
+    .summary-modal-meta {
+        margin-top: 6px;
+        font-size: 0.72rem;
+        line-height: 1.34;
+    }
+
+    .summary-modal-stats {
+        margin-top: 12px;
+        gap: 7px;
+    }
+
+    .summary-modal-stat {
+        padding: 10px 11px;
+    }
+
+    .summary-modal-stat-value {
+        margin-top: 5px;
+        font-size: 1.08rem;
+    }
+
+    .summary-modal-stat-note {
+        margin-top: 3px;
+        font-size: 0.68rem;
+        line-height: 1.28;
+    }
+
+    .summary-modal-signature {
+        margin-top: 12px;
+        padding: 12px 10px 10px;
+    }
+
+    .summary-modal-signature .footer-brand {
+        font-size: clamp(1.18rem, 6.4vw, 1.72rem);
+    }
+
+    .summary-modal-signature .footer-brand-line {
+        margin-top: 8px;
+        margin-bottom: 8px;
+    }
+
+    .summary-modal-signature .footer-copy,
+    .summary-modal-signature .footer-version {
+        font-size: 0.68rem;
+        line-height: 1.32;
+    }
+
+    .summary-modal-button {
+        margin-top: 12px;
+        padding: 11px 15px;
+        font-size: 0.84rem;
     }
 }
 
