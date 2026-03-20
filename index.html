@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TestAdBlocker By DShineeTools</title>
+    <title>Đánh Giá Bộ Lọc Quảng Cáo & DNS</title>
     <meta name="description" content="Kiểm tra 160+ domain quảng cáo, tracker, malware, phishing, spam và telemetry. Đánh giá chính xác bộ lọc/DNS đang hoạt động trên thiết bị.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Orbitron:wght@600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -25,7 +25,7 @@
                 </div>
                 <h1>Kiểm tra bộ lọc quảng cáo<br>& DNS trên thiết bị</h1>
                 <p class="hero-desc">
-                    Hệ thống gửi request thật tới các domain quảng cáo, tracker, malware, phishing, spam và telemetry.
+                    Hệ thống gửi 160+ request thật tới các domain quảng cáo, tracker, malware, phishing, spam và telemetry.
                     Mọi request đều đi qua đường DNS và bộ lọc hiện tại trên thiết bị để cho kết quả chính xác.
                 </p>
                 <div class="hero-actions">
@@ -86,7 +86,7 @@
                         <span class="mini-label">Một phần</span>
                         <strong class="stat-partial" id="partialCount">0</strong>
                     </div>
-                    <div class="mini-stat">
+                    <div class="mini-stat mini-stat-clickable" id="passedSummaryCard" role="button" tabindex="0" aria-expanded="false">
                         <span class="mini-label">Đi qua</span>
                         <strong class="stat-passed" id="passedCount">0</strong>
                     </div>
@@ -160,8 +160,10 @@
 
     <footer class="site-footer">
         <div class="container footer-inner">
-            <p>AdBlock & DNS Filter Assessment Tool — 160+ domain kiểm tra qua request thật.</p>
-            <p class="footer-note">Không có dữ liệu nào được thu thập hay gửi đi. Kết quả mang tính tham khảo.</p>
+            <div class="footer-brand">DShinee Tools</div>
+            <div class="footer-brand-line" aria-hidden="true"></div>
+            <p class="footer-copy">© 2026 DShinee Dev. All Rights Reserved.</p>
+            <p class="footer-version" id="footerVersion">Version Update: v1.0.1</p>
         </div>
     </footer>
 
