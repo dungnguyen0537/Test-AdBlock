@@ -66,7 +66,13 @@ window.AD_BLOCK_TEST_DATA = Object.freeze({
             { id: 'ads-vungle', kind: 'hostname', target: 'ads.api.vungle.com', name: 'Vungle / Liftoff', desc: 'Video ads cho mobile.' },
             { id: 'ads-mopub', kind: 'hostname', target: 'ads.mopub.com', name: 'MoPub', desc: 'Mobile ad exchange (AppLovin).' },
             { id: 'ads-smaato', kind: 'hostname', target: 'soma.smaato.net', name: 'Smaato', desc: 'Real-time mobile ad platform.' },
-            { id: 'ads-adcolony', kind: 'hostname', target: 'adc3-launch.adcolony.com', name: 'AdColony', desc: 'Video quảng cáo HD mobile.' }
+            { id: 'ads-adcolony', kind: 'hostname', target: 'adc3-launch.adcolony.com', name: 'AdColony', desc: 'Video quảng cáo HD mobile.' },
+            // Vietnam local ads
+            { id: 'ads-adtima', kind: 'hostname', target: 'ad.adtima.vn', name: 'Zalo Ads (Adtima)', desc: 'Mạng quảng cáo Zalo / Zing.' },
+            { id: 'ads-vccorp', kind: 'hostname', target: 'admicro.vn', name: 'Admicro', desc: 'Mạng quảng cáo VCcorp.' },
+            { id: 'ads-eclick', kind: 'hostname', target: 'eclick.vn', name: 'eClick', desc: 'Mạng quảng cáo FPT.' },
+            { id: 'ads-novaads', kind: 'hostname', target: 'novaon.net', name: 'Novaon', desc: 'Mạng quảng cáo Novaon.' },
+            { id: 'ads-coccoc', kind: 'hostname', target: 'qc.coccoc.com', name: 'Cốc Cốc Ads', desc: 'Mạng quảng cáo Cốc Cốc.' }
         ],
         tracking: [
             // Google
@@ -118,7 +124,10 @@ window.AD_BLOCK_TEST_DATA = Object.freeze({
             { id: 'trk-chartbeat', kind: 'hostname', target: 'static.chartbeat.com', name: 'Chartbeat', desc: 'Real-time content analytics.' },
             { id: 'trk-comscore', kind: 'hostname', target: 'sb.scorecardresearch.com', name: 'Comscore', desc: 'Internet analytics & measurement.' },
             { id: 'trk-quantcast', kind: 'hostname', target: 'pixel.quantserve.com', name: 'Quantcast', desc: 'Audience measurement.' },
-            { id: 'trk-nielsen', kind: 'hostname', target: 'secure-dcr.imrworldwide.com', name: 'Nielsen DCR', desc: 'Digital content ratings.' }
+            { id: 'trk-nielsen', kind: 'hostname', target: 'secure-dcr.imrworldwide.com', name: 'Nielsen DCR', desc: 'Digital content ratings.' },
+            // Vietnam tracking
+            { id: 'trk-adtima', kind: 'hostname', target: 'log.adtima.vn', name: 'Adtima Tracking', desc: 'Tracking của hệ sinh thái Zalo.' },
+            { id: 'trk-vccorp', kind: 'hostname', target: 'log.admicro.vn', name: 'Admicro Tracking', desc: 'Tracking của Admicro.' }
         ],
         malware: [
             // AMTSO Test URLs
