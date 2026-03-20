@@ -747,7 +747,12 @@
             toggle.onclick = () => {
                 if (!state.resultsReady) return;
                 const body = $(`body-${cat}`);
-                setCategoryExpanded(cat, !!body?.hidden);
+                if (body?.hidden) {
+                    closeAllCategoryAccordions();
+                    setCategoryExpanded(cat, true);
+                    return;
+                }
+                setCategoryExpanded(cat, false);
             };
 
             toggle.onkeydown = (event) => {
@@ -755,7 +760,12 @@
                 if (event.key === 'Enter' || event.key === ' ') {
                     event.preventDefault();
                     const body = $(`body-${cat}`);
-                    setCategoryExpanded(cat, !!body?.hidden);
+                    if (body?.hidden) {
+                        closeAllCategoryAccordions();
+                        setCategoryExpanded(cat, true);
+                        return;
+                    }
+                    setCategoryExpanded(cat, false);
                 }
             };
         });
