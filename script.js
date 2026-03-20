@@ -852,6 +852,12 @@
         const controlEl = $('controlIndicator');
         if (controlEl) controlEl.className = 'control-indicator';
 
+        const passedSummaryCard = $('passedSummaryCard');
+        if (passedSummaryCard) {
+            passedSummaryCard.classList.remove('is-active');
+            passedSummaryCard.setAttribute('aria-expanded', 'false');
+        }
+
         const scoreWrap = document.querySelector('.score-ring-wrap');
         if (scoreWrap) scoreWrap.classList.remove('score-complete');
 
@@ -911,6 +917,120 @@
         }
     }
 
+    function getProbeExportValue(probe) {
+        return probe.kind === 'hostname' ? probe.target : probe.target;
+    }
+
+    function collectPassedGroups() {
+        return CATEGORY_ORDER.map(cat => {
+            const meta = DATA.categories[cat];
+            const lines = getCategoryItems(cat)
+                .filter(probe => state.results[cat][probe.id]?.status === 'passed')
+                .map(probe => getProbeExportValue(probe));
+
+            return {
+                category: cat,
+                label: meta.label,
+                tone: meta.tone,
+                items: lines,
+            };
+        }).filter(group => group.items.length > 0);
+    }
+
+    function buildPassedCopyText(groups) {
+        return groups.map(group => `[${group.label}]\n${group.items.join('\n')}`).join('\n\n');
+    }
+
+    async function copyText(text) {
+        if (navigator.clipboard?.writeText) {
+            await navigator.clipboard.writeText(text);
+            return;
+        }
+
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.setAttribute('readonly', '');
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+    }
+
+    function bindPassedDomainInteractions(groups) {
+        const report = $('reportSection');
+        const passedCard = $('reportPassedToggle');
+        const passedPanel = $('reportPassedPanel');
+        const copyBtn = $('copyPassedDomainsBtn');
+        const summaryCard = $('passedSummaryCard');
+        if (!passedCard || !passedPanel) return;
+
+        const setOpenState = (open, shouldScroll = false) => {
+            passedPanel.hidden = !open;
+            passedCard.classList.toggle('is-open', open);
+            passedCard.setAttribute('aria-expanded', String(open));
+
+            if (summaryCard) {
+                summaryCard.classList.toggle('is-active', open);
+                summaryCard.setAttribute('aria-expanded', String(open));
+            }
+
+            if (open && shouldScroll) {
+                passedPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        };
+
+        const togglePanel = (shouldScroll = false) => {
+            setOpenState(passedPanel.hidden, shouldScroll);
+        };
+
+        const onKeyboardToggle = (event, shouldScroll = false) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                togglePanel(shouldScroll);
+            }
+        };
+
+        passedCard.addEventListener('click', () => togglePanel(false));
+        passedCard.addEventListener('keydown', event => onKeyboardToggle(event, false));
+
+        if (summaryCard) {
+            summaryCard.onclick = () => {
+                if (report) {
+                    report.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+                setOpenState(true, true);
+            };
+            summaryCard.onkeydown = event => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    if (report) {
+                        report.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                    setOpenState(true, true);
+                }
+            };
+        }
+
+        if (copyBtn) {
+            copyBtn.disabled = groups.length === 0;
+            copyBtn.addEventListener('click', async () => {
+                const originalLabel = copyBtn.textContent;
+                try {
+                    await copyText(buildPassedCopyText(groups));
+                    copyBtn.textContent = 'Đã copy';
+                } catch {
+                    copyBtn.textContent = 'Copy lỗi';
+                }
+
+                window.setTimeout(() => {
+                    copyBtn.textContent = originalLabel;
+                }, 1600);
+            });
+        }
+    }
+
     /* ─── Report Generation ─── */
 
     function generateReport() {
@@ -928,6 +1048,7 @@
             scores[cat] = getEffectiveScore(getCategoryStats(cat));
         });
         const profile = classifyProfile(scores);
+        const passedGroups = collectPassedGroups();
 
         const elapsed = ((Date.now() - state.startTime) / 1000).toFixed(1);
 
@@ -1025,6 +1146,35 @@
             `;
         }
 
+        const passedPanelMarkup = `
+            <div class="report-passed-panel" id="reportPassedPanel" hidden>
+                <div class="report-passed-head">
+                    <div>
+                        <h4>Danh sách domain đi qua</h4>
+                        <p>Mỗi domain nằm trên một dòng và được chia theo từng nhóm để tiện kiểm tra hoặc copy.</p>
+                    </div>
+                    <button class="report-copy-button" id="copyPassedDomainsBtn" type="button">Copy all</button>
+                </div>
+                ${passedGroups.length > 0 ? `
+                    <div class="report-passed-groups">
+                        ${passedGroups.map(group => `
+                            <div class="report-passed-group tone-${group.tone}">
+                                <div class="report-passed-group-head">
+                                    <strong>${escapeHtml(group.label)}</strong>
+                                    <span>${group.items.length} domain</span>
+                                </div>
+                                <div class="report-passed-lines">
+                                    ${group.items.map(item => `<div class="report-passed-line">${escapeHtml(item)}</div>`).join('')}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                ` : `
+                    <div class="report-passed-empty">Không có domain nào ở trạng thái Đi qua.</div>
+                `}
+            </div>
+        `;
+
         content.innerHTML = `
             <div class="report-header">
                 <div class="report-title-area">
@@ -1053,10 +1203,11 @@
                     <div class="report-stat-label">Một phần</div>
                     <div class="report-stat-pct">${overview.tested ? Math.round(overview.partial/overview.tested*100) : 0}%</div>
                 </div>
-                <div class="report-stat-card stat-passed">
+                <div class="report-stat-card stat-passed stat-clickable" id="reportPassedToggle" role="button" tabindex="0" aria-expanded="false" aria-controls="reportPassedPanel">
                     <div class="report-stat-number">${overview.passed}</div>
                     <div class="report-stat-label">Đi qua được</div>
                     <div class="report-stat-pct">${overview.tested ? Math.round(overview.passed/overview.tested*100) : 0}%</div>
+                    <div class="report-stat-action">${overview.passed > 0 ? 'Bấm để xem list' : 'Không có domain đi qua'}</div>
                 </div>
                 <div class="report-stat-card stat-control">
                     <div class="report-stat-number">${state.controlsPassed}/${DATA.controls.length}</div>
@@ -1064,6 +1215,8 @@
                     <div class="report-stat-pct">${state.controlsHealthy ? 'Ổn định' : 'Bất ổn'}</div>
                 </div>
             </div>
+
+            ${passedPanelMarkup}
 
             <p class="report-verdict">${escapeHtml(profile.summary)}</p>
 
@@ -1075,6 +1228,7 @@
             </div>
         `;
 
+        bindPassedDomainInteractions(passedGroups);
         report.style.display = 'block';
         report.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
@@ -1161,7 +1315,3 @@
         init();
     }
 })();
-
-
-
-
