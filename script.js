@@ -1,11 +1,48 @@
 (() => {
     'use strict';
 
-    const DATA = window.AD_BLOCK_TEST_DATA;
+    const DATA = cloneData(window.AD_BLOCK_TEST_DATA);
     const CATEGORY_ORDER = ['ads', 'tracking', 'malware', 'adult', 'spam', 'telemetry'];
     const CONTROL_TIMEOUT = 4000;
     const PROBE_TIMEOUT = 5000;
     const CONCURRENCY = 1; // Khách hàng yêu cầu chạy tuần tự thay vì song song
+    const AUTO_PROBE_PREFIX = 'live';
+    const AUTO_DATA_CACHE_KEY = 'adblock-live-feed-cache-v1';
+    const AUTO_DATA_CACHE_VERSION = 1;
+    const AUTO_DATA_TIMEOUT = 12000;
+
+    const AUTO_FEEDS = [
+        {
+            category: 'ads',
+            label: 'EasyList',
+            url: 'https://cdn.jsdelivr.net/gh/easylist/easylist@master/easylist/easylist.txt',
+            parser: 'adblock',
+            maxItems: 10,
+        },
+        {
+            category: 'tracking',
+            label: 'EasyPrivacy',
+            url: 'https://cdn.jsdelivr.net/gh/easylist/easylist@master/easyprivacy/easyprivacy.txt',
+            parser: 'adblock',
+            maxItems: 10,
+        },
+        {
+            category: 'malware',
+            label: 'StevenBlack Hosts',
+            url: 'https://cdn.jsdelivr.net/gh/StevenBlack/hosts@master/hosts',
+            parser: 'hosts',
+            maxItems: 8,
+        },
+        {
+            category: 'adult',
+            label: 'StevenBlack Porn',
+            url: 'https://cdn.jsdelivr.net/gh/StevenBlack/hosts@master/alternates/porn/hosts',
+            parser: 'hosts',
+            maxItems: 8,
+        },
+    ];
+
+    let autoDataPromise = null;
 
     const CATEGORY_ICONS = {
         ads: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 11 18-5v12L3 13v-2z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg>`,
@@ -24,6 +61,10 @@
         abortControllers: [],
         progress: { total: 0, done: 0 },
         startTime: 0,
+        autoDataMeta: {
+            mode: 'static',
+            totalAuto: 0,
+        },
     };
 
     const TEXT = {
@@ -36,6 +77,14 @@
     };
 
     /* ─── Utilities ─── */
+
+    function cloneData(value) {
+        if (!value) return null;
+        if (typeof window.structuredClone === 'function') {
+            return window.structuredClone(value);
+        }
+        return JSON.parse(JSON.stringify(value));
+    }
 
     function escapeHtml(v) {
         return String(v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
@@ -51,11 +100,30 @@
 
     function setText(id, v) { const el = $(id); if (el) el.textContent = v; }
 
+    function isAutoProbe(probe) {
+        return typeof probe?.id === 'string' && probe.id.startsWith(`${AUTO_PROBE_PREFIX}-`);
+    }
+
+    function getTodayKey() {
+        return new Date().toISOString().slice(0, 10);
+    }
+
     function setRunStatus(text, mode) {
         const chip = $('runStatus');
         const label = $('runStatusLabel');
         if (chip) chip.className = `chip status-chip ${mode || 'is-idle'}`;
         if (label) label.textContent = text;
+    }
+
+    function getDatasetLabel() {
+        const suffixByMode = {
+            syncing: ' • đang đồng bộ',
+            live: ' • live',
+            cache: ' • cache',
+            'stale-cache': ' • cache cũ',
+        };
+        const suffix = suffixByMode[state.autoDataMeta.mode] || '';
+        return `Dữ liệu: ${DATA?.refreshedAt || '-'}${suffix}`;
     }
 
     function formatRunTime(v) {
@@ -76,6 +144,297 @@
     function appendNonce(url) {
         const glue = url.includes('?') ? '&' : '?';
         return `${url}${glue}_nocache=${Date.now()}-${Math.random().toString(16).slice(2,7)}`;
+    }
+
+    function hashString(value) {
+        let hash = 0;
+        for (let i = 0; i < value.length; i++) {
+            hash = ((hash << 5) - hash + value.charCodeAt(i)) >>> 0;
+        }
+        return hash >>> 0;
+    }
+
+    function slugifyHost(host) {
+        return String(host).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 48);
+    }
+
+    function normalizeHostname(rawValue) {
+        if (!rawValue) return '';
+
+        let candidate = String(rawValue).trim().toLowerCase();
+        if (!candidate) return '';
+
+        candidate = candidate
+            .replace(/^\|\|/, '')
+            .replace(/^\*\./, '')
+            .replace(/\^.*$/, '')
+            .replace(/[/?#].*$/, '')
+            .replace(/:+$/, '')
+            .replace(/\.$/, '')
+            .trim();
+
+        if (candidate.startsWith('http://') || candidate.startsWith('https://')) {
+            try {
+                candidate = new URL(candidate).hostname;
+            } catch {
+                return '';
+            }
+        }
+
+        if (!candidate || candidate.includes('*')) return '';
+        if (!/^[a-z0-9.-]+$/.test(candidate)) return '';
+        if (!candidate.includes('.')) return '';
+        if (candidate.startsWith('.') || candidate.endsWith('.')) return '';
+        if (candidate.split('.').some(part => !part || part.length > 63)) return '';
+        if (/^\d+\.\d+\.\d+\.\d+$/.test(candidate)) return '';
+
+        return candidate;
+    }
+
+    function extractHostnamesFromAdblock(text) {
+        const hostnames = new Set();
+        const lines = text.split(/\r?\n/);
+
+        lines.forEach(rawLine => {
+            const line = rawLine.trim();
+            if (!line || line.startsWith('!') || line.startsWith('[')) return;
+
+            const matches = line.matchAll(/\|\|([a-z0-9*_.-]+\.[a-z0-9.-]+)\^/gi);
+            for (const match of matches) {
+                const hostname = normalizeHostname(match[1]);
+                if (hostname) hostnames.add(hostname);
+            }
+        });
+
+        return [...hostnames];
+    }
+
+    function extractHostnamesFromHosts(text) {
+        const hostnames = new Set();
+        const lines = text.split(/\r?\n/);
+
+        lines.forEach(rawLine => {
+            const line = rawLine.trim();
+            if (!line || line.startsWith('#')) return;
+
+            const match = line.match(/^(?:0\.0\.0\.0|127\.0\.0\.1|::1)\s+([^\s#]+)/i);
+            if (!match) return;
+
+            const hostname = normalizeHostname(match[1]);
+            if (hostname) hostnames.add(hostname);
+        });
+
+        return [...hostnames];
+    }
+
+    function extractFeedHostnames(text, parser) {
+        if (parser === 'hosts') return extractHostnamesFromHosts(text);
+        return extractHostnamesFromAdblock(text);
+    }
+
+    function pickRotatingSample(hostnames, maxItems, seedKey, usedTargets) {
+        const uniqueHosts = [...new Set(hostnames)]
+            .filter(host => host && !usedTargets.has(host))
+            .sort();
+
+        if (!uniqueHosts.length || maxItems <= 0) return [];
+
+        const offset = hashString(seedKey) % uniqueHosts.length;
+        const picked = [];
+
+        for (let step = 0; step < uniqueHosts.length && picked.length < maxItems; step++) {
+            const host = uniqueHosts[(offset + step) % uniqueHosts.length];
+            if (usedTargets.has(host)) continue;
+            usedTargets.add(host);
+            picked.push(host);
+        }
+
+        return picked;
+    }
+
+    function readAutoDataCache() {
+        try {
+            const raw = window.localStorage.getItem(AUTO_DATA_CACHE_KEY);
+            if (!raw) return null;
+            const parsed = JSON.parse(raw);
+            if (parsed.version !== AUTO_DATA_CACHE_VERSION || !parsed.autoProbes) return null;
+            return parsed;
+        } catch {
+            return null;
+        }
+    }
+
+    function writeAutoDataCache(bundle) {
+        try {
+            window.localStorage.setItem(AUTO_DATA_CACHE_KEY, JSON.stringify({
+                version: AUTO_DATA_CACHE_VERSION,
+                day: bundle.day,
+                totalAuto: bundle.totalAuto,
+                autoProbes: bundle.autoProbes,
+            }));
+        } catch {
+            // Bỏ qua nếu localStorage bị chặn hoặc đầy
+        }
+    }
+
+    async function fetchTextFeed(url, timeout = AUTO_DATA_TIMEOUT) {
+        const controller = new AbortController();
+        const timerId = window.setTimeout(() => controller.abort(), timeout);
+
+        try {
+            const response = await fetch(appendNonce(url), {
+                method: 'GET',
+                cache: 'no-store',
+                credentials: 'omit',
+                redirect: 'follow',
+                referrerPolicy: 'no-referrer',
+                signal: controller.signal,
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+
+            return await response.text();
+        } finally {
+            window.clearTimeout(timerId);
+        }
+    }
+
+    function buildAutoProbe(feed, host) {
+        return {
+            id: `${AUTO_PROBE_PREFIX}-${feed.category}-${slugifyHost(host)}`,
+            kind: 'hostname',
+            target: host,
+            name: `[Auto] ${host}`,
+            desc: `Tự động đồng bộ từ ${feed.label}.`,
+        };
+    }
+
+    function mergeAutoProbes(autoProbesByCategory) {
+        CATEGORY_ORDER.forEach(cat => {
+            const manualProbes = (DATA.probes[cat] || []).filter(probe => !isAutoProbe(probe));
+            const liveProbes = autoProbesByCategory[cat] || [];
+            DATA.probes[cat] = [...manualProbes, ...liveProbes];
+        });
+    }
+
+    async function loadLiveAutoProbeBundle() {
+        const todayKey = getTodayKey();
+        const autoProbes = Object.fromEntries(CATEGORY_ORDER.map(cat => [cat, []]));
+        const usedTargetsByCategory = new Map(
+            CATEGORY_ORDER.map(cat => [
+                cat,
+                new Set(
+                    (DATA.probes[cat] || [])
+                        .filter(probe => !isAutoProbe(probe))
+                        .map(probe => normalizeHostname(probe.target))
+                        .filter(Boolean)
+                ),
+            ])
+        );
+
+        const results = await Promise.all(AUTO_FEEDS.map(async feed => {
+            try {
+                const text = await fetchTextFeed(feed.url, feed.timeout || AUTO_DATA_TIMEOUT);
+                const hostnames = extractFeedHostnames(text, feed.parser);
+                const pickedHosts = pickRotatingSample(
+                    hostnames,
+                    feed.maxItems,
+                    `${todayKey}:${feed.category}:${feed.url}`,
+                    usedTargetsByCategory.get(feed.category)
+                );
+
+                return {
+                    feed,
+                    probes: pickedHosts.map(host => buildAutoProbe(feed, host)),
+                    ok: true,
+                };
+            } catch (error) {
+                return {
+                    feed,
+                    probes: [],
+                    ok: false,
+                    error,
+                };
+            }
+        }));
+
+        let totalAuto = 0;
+        let feedsOk = 0;
+
+        results.forEach(result => {
+            if (result.ok) feedsOk++;
+            totalAuto += result.probes.length;
+            autoProbes[result.feed.category].push(...result.probes);
+        });
+
+        return {
+            day: todayKey,
+            totalAuto,
+            feedsOk,
+            autoProbes,
+        };
+    }
+
+    function applyAutoProbeBundle(bundle, mode) {
+        mergeAutoProbes(bundle.autoProbes || {});
+        if (bundle.day) DATA.refreshedAt = bundle.day;
+        state.autoDataMeta = {
+            mode,
+            totalAuto: bundle.totalAuto || 0,
+        };
+    }
+
+    async function ensureAutoDataLoaded() {
+        if (autoDataPromise) return autoDataPromise;
+
+        state.autoDataMeta.mode = 'syncing';
+        setText('datasetVersion', getDatasetLabel());
+
+        autoDataPromise = (async () => {
+            const cache = readAutoDataCache();
+            const todayKey = getTodayKey();
+
+            if (cache && cache.day === todayKey) {
+                applyAutoProbeBundle(cache, 'cache');
+                return cache;
+            }
+
+            try {
+                const liveBundle = await loadLiveAutoProbeBundle();
+                if (liveBundle.feedsOk > 0) {
+                    writeAutoDataCache(liveBundle);
+                    applyAutoProbeBundle(liveBundle, 'live');
+                    return liveBundle;
+                }
+            } catch {
+                // Sẽ fallback sang cache hoặc dữ liệu tĩnh bên dưới
+            }
+
+            if (cache) {
+                applyAutoProbeBundle(cache, 'stale-cache');
+                return cache;
+            }
+
+            state.autoDataMeta = { mode: 'static', totalAuto: 0 };
+            return {
+                day: DATA.refreshedAt || todayKey,
+                totalAuto: 0,
+                autoProbes: Object.fromEntries(CATEGORY_ORDER.map(cat => [cat, []])),
+            };
+        })().finally(() => {
+            setText('datasetVersion', getDatasetLabel());
+
+            if (!state.isRunning) {
+                initState();
+                renderCategories();
+                resetResults();
+                setText('probeCount', getAllProbeCount());
+            }
+        });
+
+        return autoDataPromise;
     }
 
     /* ─── State Init ─── */
@@ -711,6 +1070,16 @@
     window.runFullAssessment = async function () {
         if (state.isRunning) return;
 
+        setRunningState(true);
+        setRunStatus('Đang đồng bộ dữ liệu', 'is-active');
+        setText('phaseText', 'Đang đồng bộ danh sách filter mới nhất...');
+        await ensureAutoDataLoaded();
+
+        initState();
+        renderCategories();
+        setText('probeCount', getAllProbeCount());
+        setText('datasetVersion', getDatasetLabel());
+
         state.abortControllers = [];
         state.startTime = Date.now();
         resetResults();
@@ -755,7 +1124,7 @@
 
         setText('browserName', detectBrowser());
         setText('probeCount', getAllProbeCount());
-        setText('datasetVersion', `Dữ liệu: ${DATA.refreshedAt}`);
+        setText('datasetVersion', getDatasetLabel());
         setText('lastRunAt', '-');
         setText('controlStatus', '-');
         setText('requestMode', 'Request thật qua DNS / filter');
@@ -768,6 +1137,8 @@
             circle.style.strokeDasharray = circumference;
             circle.style.strokeDashoffset = circumference;
         }
+
+        void ensureAutoDataLoaded();
     }
 
     if (document.readyState === 'loading') {
