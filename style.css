@@ -1415,7 +1415,9 @@ body {
     box-shadow: 0 0 20px rgba(34,211,238,0.18);
 }
 
-.footer-copy {
+.footer-copy,
+.footer-version {
+    font-family: inherit;
     font-size: 0.84rem;
     color: var(--text-secondary);
     line-height: 1.7;
@@ -1424,11 +1426,8 @@ body {
 
 .footer-version {
     margin-top: 8px;
-    font-size: 0.74rem;
-    color: var(--text-muted);
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
-    opacity: 0.82;
+    text-transform: none;
+    opacity: 1;
 }
 
 /* ─── Responsive ─── */
