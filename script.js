@@ -1170,7 +1170,7 @@
         if (!btn || !label) return;
         btn.disabled = running;
         btn.classList.toggle('is-running', running);
-        label.textContent = running ? 'Đang đánh giá...' : 'Chạy lại bài test';
+        label.textContent = running ? 'Đang kiểm tra...' : 'Kiểm tra lại';
     }
 
     async function runCategory(cat) {
