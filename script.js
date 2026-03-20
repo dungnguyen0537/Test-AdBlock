@@ -5,7 +5,7 @@
     const CATEGORY_ORDER = ['ads', 'tracking', 'malware', 'adult', 'spam', 'telemetry'];
     const CONTROL_TIMEOUT = 4000;
     const PROBE_TIMEOUT = 5000;
-    const CONCURRENCY = 6;
+    const CONCURRENCY = 1; // Khách hàng yêu cầu chạy tuần tự thay vì song song
 
     const CATEGORY_ICONS = {
         ads: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 11 18-5v12L3 13v-2z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg>`,
