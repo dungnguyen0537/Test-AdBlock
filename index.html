@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Đánh Giá Bộ Lọc Quảng Cáo & DNS</title>
+    <title>DShineeTools TestAdBlocker</title>
     <meta name="description" content="Kiểm tra 160+ domain quảng cáo, tracker, malware, phishing, spam và telemetry. Đánh giá chính xác bộ lọc/DNS đang hoạt động trên thiết bị.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -38,7 +38,10 @@
                     </button>
                 </div>
                 <div class="hero-chips">
-                    <div class="chip" id="runStatus"><span class="chip-dot idle"></span>Sẵn sàng</div>
+                    <div class="chip status-chip is-idle" id="runStatus">
+                        <span class="chip-dot" id="runStatusDot"></span>
+                        <span id="runStatusLabel">Sẵn sàng</span>
+                    </div>
                     <div class="chip" id="requestMode">Request thật qua DNS / filter</div>
                     <div class="chip" id="datasetVersion">Dữ liệu: -</div>
                 </div>
