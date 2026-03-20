@@ -7,8 +7,8 @@
     const PROBE_TIMEOUT = 5000;
     const CONCURRENCY = 1; // Khách hàng yêu cầu chạy tuần tự thay vì song song
     const AUTO_PROBE_PREFIX = 'live';
-    const AUTO_DATA_CACHE_KEY = 'adblock-live-feed-cache-v1';
-    const AUTO_DATA_CACHE_VERSION = 1;
+    const AUTO_DATA_CACHE_KEY = 'adblock-live-feed-cache-v2';
+    const AUTO_DATA_CACHE_VERSION = 2;
     const AUTO_DATA_TIMEOUT = 12000;
 
     const AUTO_FEEDS = [
@@ -24,35 +24,189 @@
             label: 'EasyPrivacy',
             url: 'https://cdn.jsdelivr.net/gh/easylist/easylist@master/easyprivacy/easyprivacy.txt',
             parser: 'adblock',
-            maxItems: 10,
+            maxItems: 8,
         },
         {
             category: 'ads',
-            label: 'AdAway Hosts',
-            url: 'https://cdn.jsdelivr.net/gh/AdAway/adaway.github.io@master/hosts.txt',
-            parser: 'hosts',
-            maxItems: 8,
+            label: 'AdGuard DNS Filter',
+            url: 'https://adguardteam.github.io/HostlistsRegistry/assets/filter_1.txt',
+            parser: 'mixed',
+            maxItems: 4,
+        },
+        {
+            category: 'ads',
+            label: '1Hosts (Lite)',
+            url: 'https://adguardteam.github.io/HostlistsRegistry/assets/filter_24.txt',
+            parser: 'mixed',
+            maxItems: 4,
+        },
+        {
+            category: 'ads',
+            label: 'AWAvenue Ads Rule',
+            url: 'https://cdn.jsdelivr.net/gh/TG-Twilight/AWAvenue-Ads-Rule@main/AWAvenue-Ads-Rule.txt',
+            parser: 'mixed',
+            maxItems: 4,
+        },
+        {
+            category: 'ads',
+            label: 'Dan Pollock\'s List',
+            url: 'https://adguardteam.github.io/HostlistsRegistry/assets/filter_4.txt',
+            parser: 'mixed',
+            maxItems: 3,
+        },
+        {
+            category: 'tracking',
+            label: 'OISD Blocklist Small',
+            url: 'https://adguardteam.github.io/HostlistsRegistry/assets/filter_5.txt',
+            parser: 'mixed',
+            maxItems: 4,
+        },
+        {
+            category: 'tracking',
+            label: 'HaGeZi\'s Pro Blocklist',
+            url: 'https://adguardteam.github.io/HostlistsRegistry/assets/filter_48.txt',
+            parser: 'mixed',
+            maxItems: 4,
+        },
+        {
+            category: 'tracking',
+            label: 'ShadowWhisperer\'s Tracking List',
+            url: 'https://cdn.jsdelivr.net/gh/ShadowWhisperer/BlockLists@master/Lists/Tracking',
+            parser: 'mixed',
+            maxItems: 4,
+        },
+        {
+            category: 'spam',
+            label: 'AdGuard DNS Popup Hosts filter',
+            url: 'https://adguardteam.github.io/HostlistsRegistry/assets/filter_59.txt',
+            parser: 'mixed',
+            maxItems: 4,
+        },
+        {
+            category: 'spam',
+            label: 'Dandelion Sprout\'s Anti Push Notifications',
+            url: 'https://adguardteam.github.io/HostlistsRegistry/assets/filter_39.txt',
+            parser: 'mixed',
+            maxItems: 4,
         },
         {
             category: 'malware',
             label: 'StevenBlack Hosts',
             url: 'https://cdn.jsdelivr.net/gh/StevenBlack/hosts@master/hosts',
             parser: 'hosts',
-            maxItems: 8,
+            maxItems: 5,
+        },
+        {
+            category: 'malware',
+            label: 'Phishing URL Blocklist',
+            url: 'https://adguardteam.github.io/HostlistsRegistry/assets/filter_30.txt',
+            parser: 'mixed',
+            maxItems: 4,
+        },
+        {
+            category: 'malware',
+            label: 'Dandelion Sprout\'s Anti-Malware List',
+            url: 'https://adguardteam.github.io/HostlistsRegistry/assets/filter_12.txt',
+            parser: 'mixed',
+            maxItems: 4,
+        },
+        {
+            category: 'malware',
+            label: 'HaGeZi\'s Threat Intelligence Feeds',
+            url: 'https://adguardteam.github.io/HostlistsRegistry/assets/filter_44.txt',
+            parser: 'mixed',
+            maxItems: 4,
+        },
+        {
+            category: 'malware',
+            label: 'Phishing Army',
+            url: 'https://adguardteam.github.io/HostlistsRegistry/assets/filter_18.txt',
+            parser: 'mixed',
+            maxItems: 4,
+        },
+        {
+            category: 'malware',
+            label: 'Malicious URL Blocklist (URLHaus)',
+            url: 'https://adguardteam.github.io/HostlistsRegistry/assets/filter_11.txt',
+            parser: 'mixed',
+            maxItems: 4,
+        },
+        {
+            category: 'malware',
+            label: 'Stalkerware Indicators List',
+            url: 'https://adguardteam.github.io/HostlistsRegistry/assets/filter_31.txt',
+            parser: 'mixed',
+            maxItems: 3,
+        },
+        {
+            category: 'malware',
+            label: 'NoCoin Filter List',
+            url: 'https://adguardteam.github.io/HostlistsRegistry/assets/filter_8.txt',
+            parser: 'mixed',
+            maxItems: 3,
+        },
+        {
+            category: 'malware',
+            label: 'uBlock0 filters - Badware risks',
+            url: 'https://adguardteam.github.io/HostlistsRegistry/assets/filter_50.txt',
+            parser: 'mixed',
+            maxItems: 3,
         },
         {
             category: 'adult',
             label: 'StevenBlack Porn',
             url: 'https://cdn.jsdelivr.net/gh/StevenBlack/hosts@master/alternates/porn/hosts',
             parser: 'hosts',
-            maxItems: 8,
+            maxItems: 5,
+        },
+        {
+            category: 'adult',
+            label: 'ShadowWhisperer\'s Dating List',
+            url: 'https://cdn.jsdelivr.net/gh/ShadowWhisperer/BlockLists@master/Lists/Dating',
+            parser: 'mixed',
+            maxItems: 3,
         },
         {
             category: 'telemetry',
             label: 'WindowsSpyBlocker',
             url: 'https://cdn.jsdelivr.net/gh/crazy-max/WindowsSpyBlocker@master/data/hosts/spy.txt',
             parser: 'hosts',
-            maxItems: 8,
+            maxItems: 4,
+        },
+        {
+            category: 'telemetry',
+            label: 'Perflyst and Dandelion Sprout\'s Smart-TV Blocklist',
+            url: 'https://adguardteam.github.io/HostlistsRegistry/assets/filter_7.txt',
+            parser: 'mixed',
+            maxItems: 3,
+        },
+        {
+            category: 'telemetry',
+            label: 'HaGeZi\'s Apple Tracker Blocklist',
+            url: 'https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@main/adblock/native.apple.txt',
+            parser: 'mixed',
+            maxItems: 3,
+        },
+        {
+            category: 'telemetry',
+            label: 'HaGeZi\'s Samsung Tracker Blocklist',
+            url: 'https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@main/adblock/native.samsung.txt',
+            parser: 'mixed',
+            maxItems: 3,
+        },
+        {
+            category: 'telemetry',
+            label: 'HaGeZi\'s Windows/Office Tracker Blocklist',
+            url: 'https://adguardteam.github.io/HostlistsRegistry/assets/filter_63.txt',
+            parser: 'mixed',
+            maxItems: 3,
+        },
+        {
+            category: 'telemetry',
+            label: 'HaGeZi\'s Xiaomi Tracker Blocklist',
+            url: 'https://adguardteam.github.io/HostlistsRegistry/assets/filter_60.txt',
+            parser: 'mixed',
+            maxItems: 3,
         },
     ];
 
@@ -211,7 +365,7 @@
 
         lines.forEach(rawLine => {
             const line = rawLine.trim();
-            if (!line || line.startsWith('!') || line.startsWith('[')) return;
+            if (!line || line.startsWith('!') || line.startsWith('[') || line.startsWith('@@')) return;
 
             const matches = line.matchAll(/\|\|([a-z0-9*_.-]+\.[a-z0-9.-]+)\^/gi);
             for (const match of matches) {
@@ -241,8 +395,32 @@
         return [...hostnames];
     }
 
+    function extractHostnamesFromRawDomains(text) {
+        const hostnames = new Set();
+        const lines = text.split(/\r?\n/);
+
+        lines.forEach(rawLine => {
+            const line = rawLine.trim();
+            if (!line || line.startsWith('#') || line.startsWith('!') || line.startsWith('[')) return;
+            if (/\s/.test(line)) return;
+
+            const hostname = normalizeHostname(line);
+            if (hostname) hostnames.add(hostname);
+        });
+
+        return [...hostnames];
+    }
+
     function extractFeedHostnames(text, parser) {
+        if (parser === 'mixed') {
+            return [...new Set([
+                ...extractHostnamesFromAdblock(text),
+                ...extractHostnamesFromHosts(text),
+                ...extractHostnamesFromRawDomains(text),
+            ])];
+        }
         if (parser === 'hosts') return extractHostnamesFromHosts(text);
+        if (parser === 'rawdomains') return extractHostnamesFromRawDomains(text);
         return extractHostnamesFromAdblock(text);
     }
 
