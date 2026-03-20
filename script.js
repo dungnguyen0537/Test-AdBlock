@@ -27,6 +27,13 @@
             maxItems: 10,
         },
         {
+            category: 'ads',
+            label: 'AdAway Hosts',
+            url: 'https://cdn.jsdelivr.net/gh/AdAway/adaway.github.io@master/hosts.txt',
+            parser: 'hosts',
+            maxItems: 8,
+        },
+        {
             category: 'malware',
             label: 'StevenBlack Hosts',
             url: 'https://cdn.jsdelivr.net/gh/StevenBlack/hosts@master/hosts',
@@ -37,6 +44,13 @@
             category: 'adult',
             label: 'StevenBlack Porn',
             url: 'https://cdn.jsdelivr.net/gh/StevenBlack/hosts@master/alternates/porn/hosts',
+            parser: 'hosts',
+            maxItems: 8,
+        },
+        {
+            category: 'telemetry',
+            label: 'WindowsSpyBlocker',
+            url: 'https://cdn.jsdelivr.net/gh/crazy-max/WindowsSpyBlocker@master/data/hosts/spy.txt',
             parser: 'hosts',
             maxItems: 8,
         },
@@ -1147,3 +1161,7 @@
         init();
     }
 })();
+
+
+
+
