@@ -10,6 +10,7 @@
     const AUTO_DATA_CACHE_KEY = 'adblock-live-feed-cache-v2';
     const AUTO_DATA_CACHE_VERSION = 2;
     const AUTO_DATA_TIMEOUT = 12000;
+    const APP_VERSION = '1.0.1';
 
     const AUTO_FEEDS = [
         {
@@ -1475,6 +1476,7 @@
         setText('datasetVersion', getDatasetLabel());
         setText('lastRunAt', '-');
         setText('controlStatus', '-');
+        setText('footerVersion', `Version Update: v${APP_VERSION}`);
         setText('requestMode', 'Request thật qua DNS / filter');
         setRunStatus('Sẵn sàng', 'is-idle');
         updateDashboard();
