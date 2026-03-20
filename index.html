@@ -3,8 +3,80 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Đánh Giá Bộ Lọc Quảng Cáo & DNS</title>
-    <meta name="description" content="Kiểm tra 160+ domain quảng cáo, tracker, malware, phishing, spam và telemetry. Đánh giá chính xác bộ lọc/DNS đang hoạt động trên thiết bị.">
+    <title>Test AdBlocker - Kiểm Tra AdBlock & DNS | DShineeTools</title>
+    <meta name="description" content="Test AdBlocker là công cụ của DShineeTools do DShinee Dev phát triển, giúp kiểm tra 160+ domain quảng cáo, tracker, malware, phishing, spam và telemetry để đánh giá bộ lọc AdBlock và DNS trên thiết bị.">
+    <meta name="keywords" content="Test AdBlocker, DShineeTools, DShinee Dev, AdBlock, DNS filter, ad blocker test, kiểm tra AdBlock, kiểm tra DNS, trình chặn quảng cáo">
+    <meta name="author" content="DShinee Dev">
+    <meta name="creator" content="DShinee Dev">
+    <meta name="publisher" content="DShineeTools">
+    <meta name="application-name" content="Test AdBlocker">
+    <meta name="apple-mobile-web-app-title" content="Test AdBlocker">
+    <meta name="theme-color" content="#0a0e17">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+    <meta name="googlebot" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+    <meta property="og:locale" content="vi_VN">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="DShineeTools">
+    <meta property="og:title" content="Test AdBlocker - Kiểm Tra AdBlock & DNS | DShineeTools">
+    <meta property="og:description" content="Công cụ do DShinee Dev phát triển để kiểm tra trình chặn quảng cáo gồm domain quảng cáo, tracker, malware, phishing, spam và telemetry, từ đó đánh giá chính xác AdBlock và DNS filter trên thiết bị.">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="Test AdBlocker - Kiểm Tra AdBlock & DNS | DShineeTools">
+    <meta name="twitter:description" content="Kiểm tra AdBlock và DNS filter với 160+ request thật qua các nhóm quảng cáo, tracker, malware, phishing, spam và telemetry.">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <script type="application/ld+json">
+        {
+            "@context": "https://schema.org",
+            "@graph": [
+                {
+                    "@type": "Organization",
+                    "@id": "#organization",
+                    "name": "DShineeTools",
+                    "alternateName": "DShinee Dev",
+                    "description": "DShineeTools la he thong cong cu do DShinee Dev xay dung va phat trien."
+                },
+                {
+                    "@type": "WebSite",
+                    "@id": "#website",
+                    "name": "Test AdBlocker",
+                    "inLanguage": "vi",
+                    "description": "Website kiem tra AdBlock va DNS filter tren trinh duyet voi cac request thuc te.",
+                    "publisher": {
+                        "@id": "#organization"
+                    }
+                },
+                {
+                    "@type": "SoftwareApplication",
+                    "name": "Test AdBlocker",
+                    "applicationCategory": "SecurityApplication",
+                    "operatingSystem": "Web Browser",
+                    "softwareVersion": "1.0.1",
+                    "isAccessibleForFree": true,
+                    "inLanguage": "vi",
+                    "creator": {
+                        "@id": "#organization"
+                    },
+                    "publisher": {
+                        "@id": "#organization"
+                    },
+                    "description": "Cong cu web giup danh gia muc do hoat dong cua bo loc AdBlock va DNS thong qua hon 160 domain quang cao, tracker, malware, phishing, spam va telemetry.",
+                    "keywords": [
+                        "Test AdBlocker",
+                        "DShineeTools",
+                        "DShinee Dev",
+                        "AdBlock",
+                        "DNS filter",
+                        "kiem tra AdBlock"
+                    ],
+                    "offers": {
+                        "@type": "Offer",
+                        "price": "0",
+                        "priceCurrency": "USD"
+                    }
+                }
+            ]
+        }
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Orbitron:wght@600;700;800&display=swap" rel="stylesheet">
@@ -23,10 +95,11 @@
                     <span class="badge-dot"></span>
                     <span>AdBlock & DNS Filter Assessment</span>
                 </div>
-                <h1>Kiểm tra bộ lọc quảng cáo<br>& DNS trên thiết bị</h1>
+                <h1>Test AdBlocker kiểm tra<br>AdBlock & DNS trên thiết bị</h1>
                 <p class="hero-desc">
-                    Hệ thống gửi 160+ request thật tới các domain quảng cáo, tracker, malware, phishing, spam và telemetry.
-                    Mọi request đều đi qua đường DNS và bộ lọc hiện tại trên thiết bị để cho kết quả chính xác.
+                    Test AdBlocker là hệ thống của DShineeTools do DShinee Dev phát triển, gửi 160+ request thật tới
+                    các domain quảng cáo, tracker, malware, phishing, spam và telemetry. Mọi request đều đi qua đường
+                    DNS và bộ lọc hiện tại trên thiết bị để cho kết quả chính xác.
                 </p>
                 <div class="hero-actions">
                     <button class="primary-button" id="btnRun" onclick="runFullAssessment()">
@@ -160,10 +233,10 @@
 
     <footer class="site-footer">
         <div class="container footer-inner">
-            <div class="footer-brand">DShinee Tools</div>
+            <div class="footer-brand">DShineeTools</div>
             <div class="footer-brand-line" aria-hidden="true"></div>
             <p class="footer-copy">© 2026 DShinee Dev. All Rights Reserved.</p>
-            <p class="footer-version" id="footerVersion">Version Update: v1.0.1</p>
+            <p class="footer-version" id="footerVersion">Version update: v1.0.1</p>
         </div>
     </footer>
 
